@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credit Workbench walkthrough</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* One reading column. Each demo step: what is on screen and what to click, the screenshot, the words to say, why it is built this way. */
+:root{
+  --bg:#FBFAFE; --card:#FFFFFF; --ink:#241A3D; --muted:#6B6480; --rule:#E4DFF0;
+  --accent:#6D28D9; --soft:#F1ECFB; --cue:#FFF4CC; --cue-ink:#5C4A00; --why:#EAF6EF; --why-ink:#14532D; --run:#1E1140; --run-ink:#E9E3FA;
+  --sans:'IBM Plex Sans',system-ui,Arial,sans-serif; --mono:'IBM Plex Mono',Consolas,monospace; --serif:'Source Serif 4',Georgia,serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#17122A; --card:#201A36; --ink:#EEE9FA; --muted:#A79FC0; --rule:#342C50; --accent:#B59BF5;
+  --soft:#2A2246; --cue:#3F3410; --cue-ink:#FFE89A; --why:#12301F; --why-ink:#BBF7D0; --run:#0F0A22; --run-ink:#DDD6FE; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#17122A; --card:#201A36; --ink:#EEE9FA; --muted:#A79FC0; --rule:#342C50; --accent:#B59BF5;
+  --soft:#2A2246; --cue:#3F3410; --cue-ink:#FFE89A; --why:#12301F; --why-ink:#BBF7D0; --run:#0F0A22; --run-ink:#DDD6FE; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+main{max-width:920px;margin:0 auto}
+header{padding-block:32px 8px}
+.eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 6px}
+h1{font-family:var(--serif);font-size:clamp(28px,4.4vw,40px);margin:0 0 10px;line-height:1.1;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 6px;max-width:72ch}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);padding-block:10px;display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
+nav a{color:var(--ink);text-decoration:none;border:1px solid var(--rule);background:var(--card);border-radius:999px;padding:3px 11px;font-size:13px}
+nav a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h2{font-family:var(--serif);font-size:27px;margin:48px 0 2px;text-wrap:balance}
+.meta{color:var(--muted);font-size:14px;margin:0 0 14px}
+.screen{border:1px solid var(--rule);background:var(--card);border-radius:10px;padding:10px 14px;margin:0 0 12px}
+.screen b.h{display:block;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.screen ol,.screen ul{margin:4px 0 0;padding-left:20px}
+figure{margin:0 0 14px}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--rule);border-radius:8px;background:#F4F6F9}
+figcaption{font-size:13px;color:var(--muted);margin-top:4px}
+.say{font-family:var(--serif);font-size:18px;line-height:1.65;margin:0 0 12px;max-width:70ch}
+.why{background:var(--why);color:var(--why-ink);border-radius:10px;padding:12px 16px;margin:6px 0 10px}
+.why b.h{display:block;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
+.why dl{margin:0;display:grid;grid-template-columns:minmax(120px,200px) 1fr;gap:6px 14px}
+.why dt{font-weight:600}.why dd{margin:0;min-width:0}
+@media (max-width:560px){ .why dl{grid-template-columns:1fr} .why dd{margin-bottom:6px} }
+.ask{background:var(--cue);color:var(--cue-ink);border-radius:8px;padding:8px 12px;margin:8px 0 0;font-size:14px;max-width:70ch}
+.box{background:var(--soft);border-radius:12px;padding:14px 18px;margin:14px 0}
+.cmd{background:var(--run);color:var(--run-ink);font-family:var(--mono);font-size:14px;border-radius:10px;padding:12px 16px;margin:8px 0;overflow-x:auto;white-space:pre}
+code{font-family:var(--mono);font-size:.88em;background:var(--soft);padding:1px 5px;border-radius:4px}
+.tbl{overflow-x:auto;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;color:var(--muted);font-weight:600;border-bottom:2px solid var(--rule);padding:6px 8px}
+td{border-bottom:1px solid var(--rule);padding:6px 8px;vertical-align:top}
+.qa dt{font-weight:600;margin-top:12px}.qa dd{margin:2px 0 0}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <p class="eyebrow">TAN GLOBUS AI · CreditLens AI · Day 3</p>
+  <h1>The Good Bank Credit Workbench: walkthrough</h1>
+  <p class="lead">A click-by-click walkthrough of the Credit Workbench, the web application around the Underwriter Agent from notebook 04b and the connections from notebook 05b. Every step has the screen and what to click, a screenshot from the trainer laptop, what to say if you are presenting it, and a green box naming the technique and why it is built that way, with the file and line.</p>
+  <p class="lead">About fifteen minutes. To start the workbench, see the README at the top of this repository. Screenshots were taken offline, without Docker, on 21 November 2026.</p>
+</header>
+<nav aria-label="Steps">
+  <a href="#before">Before</a><a href="#s1">1 Queue</a><a href="#s2">2 Application</a><a href="#s3">3 Run</a><a href="#s4">4 Recommendation</a>
+  <a href="#s5">5 Policy checks</a><a href="#s6">6 Sources</a><a href="#s7">7 Activity</a><a href="#s8">8 Region</a><a href="#s9">9 Refused</a>
+  <a href="#s10">10 Decision</a><a href="#s11">11 Exceptions</a><a href="#s12">12 Notify</a><a href="#s13">13 Learned</a><a href="#s14">14 Audit</a>
+  <a href="#docker">Docker</a><a href="#behind">Behind it</a><a href="#qa">Questions</a><a href="#reset">Reset</a>
+</nav>
+
+<!-- ====================================================================== BEFORE -->
+<h2 id="before">Before you start</h2>
+<p class="meta">Five minutes. The setup steps (install, generate the data) are in the README.</p>
+<div class="screen"><b class="h">Start the workbench</b>
+<ol>
+  <li>In a VS Code terminal in the repository folder:</li>
+</ol>
+<div class="cmd">python app/workbench/server.py</div>
+<ol start="2">
+  <li>Open <code>http://localhost:8090</code>. The top bar says <b>Review assistant starting</b> for about a minute while the server runs notebook 04b's code, then <b>Review assistant online</b>.</li>
+  <li>Sign in as <b>Amaira Dey · Head of Credit</b> (the user menu, top right). Close the browser's other tabs; you will switch users several times.</li>
+  <li>Optional: start Docker first (see <a href="#docker">Docker</a>) if you want the live systems in the demo.</li>
+</ol></div>
+<div class="box"><b>A clean start.</b> Reviews live in the server's memory: stopping it with Ctrl+C and starting again empties the queue's statuses. To also clear the audit log and the test Jira tickets, delete <code>data/cache/workbench_audit.jsonl</code> and <code>data/cache/jira_workbench.json</code> before starting. The learned conditions (<code>data/cache/underwriter_feedback.json</code>) are rebuilt by the notebook code at every start, seeded with the compliance review Amaira added in notebook 04b.</div>
+
+<!-- ====================================================================== 1 -->
+<h2 id="s1">1. The work queue</h2>
+<p class="meta">Signed in as Amaira Dey, Head of Credit · slide 57</p>
+<div class="screen"><b class="h">On screen, what to click</b>
+<ul><li>The work queue: every application, newest first. Point at the columns: amount in crore, age in days, the analyst, the status.</li>
+<li>Click a column header to sort; use the status and region filters.</li>
+<li>Bottom left, <b>Connected systems</b>: core banking says <b>Replica</b>, repayments says <b>Estimated</b> (no Docker).</li></ul></div>
+<figure><img src="img/workbench/01_queue.png" alt="The work queue: a table of applications with borrower, product, region, amount, submitted date, age, analyst, status and recommendation"><figcaption>The work queue as the Head of Credit sees it: all four regions.</figcaption></figure>
+<p class="say">This is everything we built today, in the form a credit team would actually use it. Not a notebook: the bank's credit workbench. I am signed in as Amaira, the Head of Credit, so I see every application in every region. Every row is a real application from Good Bank's data, and Rohan's and Rahul's files are in here too. Nothing has been reviewed yet: every status says new.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>A table, not cards</dt><dd>Credit teams work through queues. Sortable columns, age in days and a status column are what real loan systems show, and they make the agent part of an existing workflow instead of a separate toy.</dd>
+  <dt>Region rule on the server</dt><dd>The queue is filtered by the user's region in <code>queue</code> (<code>app/workbench/server.py</code> line 242) using <code>visible</code> (line 161). The page only shows what the server returns.</dd>
+  <dt>Connected systems</dt><dd>The status box comes from <code>/api/systems</code> (line 438): the Oracle adapter's backend and the running Docker containers.</dd></dl></div>
+
+<!-- ====================================================================== 2 -->
+<h2 id="s2">2. Opening an application</h2>
+<p class="meta">Click <b>Rohan Packaging Pvt Ltd</b> (A901)</p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>The record header: borrower, status, the key fields (requested ₹5.00 Cr, sixty months, manufacturing, West, analyst Lucky Grewal) and the approval authority: Head of Credit.</li>
+<li>The tabs are empty, and the credit decision panel says it is available once a review exists.</li></ul></div>
+<figure><img src="img/workbench/02_record_new.png" alt="Rohan Packaging's application record before any review, with the Run credit review button"><figcaption>Before the review: the facts from the application, and nothing decided.</figcaption></figure>
+<p class="say">Rohan's application. Five crore for a new corrugation line, over sixty months. His analyst is Lucky Grewal in the West region. And notice the field at the end: approval authority, Head of Credit. That comes straight from the bank's policy, and it will matter in a few minutes. Nothing has been reviewed yet. Let us ask the review assistant to do the first four jobs.</p>
+
+<!-- ====================================================================== 3 -->
+<h2 id="s3">3. Running the credit review</h2>
+<p class="meta">Click <b>Run credit review</b> · about five seconds</p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>A progress bar with seven steps fills in as the server runs them: Core systems, Application data, Data validation, Memo cross-check, Options assessment, Recommendation, Awaiting approval.</li>
+<li>Core systems takes about four seconds the first time (the repayment service is down and the client gives up), then the rest is quick.</li></ul></div>
+<figure><img src="img/workbench/03_running.png" alt="The credit review in progress, step one of seven: core systems"><figcaption>The steps arrive from the server one by one, as the graph runs them.</figcaption></figure>
+<p class="say">Watch the steps. These are the nodes of the graph we built in notebook four b, streamed from the server as they run. First it reads the bank's systems, core banking and the repayment service. Then it observes the file with its six sensors, checks its own figures, reads what the memo agent wrote, weighs the options the policy allows, writes the recommendation, and then it stops. The last step is awaiting approval, and it stays there. The review assistant never takes the fifth job.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>The notebook's own code</dt><dd>At start-up the server runs notebook 04b's code cells once, in the background (<code>load_agent</code>, line 56), and wires the notebook's seven node functions into one LangGraph (<code>build_graph</code>, line 77). The demo cannot drift from what participants built.</dd>
+  <dt>Streamed steps</dt><dd><code>prepare</code> (line 267) runs <code>graph.stream(..., stream_mode="updates")</code> and sends each node as a server-sent event; the page draws the progress bar from them.</dd>
+  <dt>It stops</dt><dd>The <code>underwriter_signs</code> node calls <code>interrupt()</code>. The graph is paused with a checkpoint; nothing is decided until a person resumes it.</dd></dl></div>
+
+<!-- ====================================================================== 4 -->
+<h2 id="s4">4. The recommendation</h2>
+<p class="meta">The Summary tab</p>
+<div class="screen"><b class="h">On screen, what to point at</b>
+<ul><li><b>Recommendation: Counter-offer · ₹1.50 Cr</b>, prepared by the Credit Review Assistant, with the prompt version.</li>
+<li><b>Rationale</b>: rule 5.2 failed; risk band low. <b>Proposed conditions</b>: the compliance review of the round trips.</li>
+<li><b>For the approver's attention</b>: not covered in the credit memo: money goes out and comes back within days.</li>
+<li><b>Key ratios</b>: everything within policy except group exposure, in red: 1,55,000 against a limit of 1,20,000.</li></ul></div>
+<figure><img src="img/workbench/04_summary.png" alt="The Summary tab: counter-offer of 1.50 crore, rationale, proposed condition, the point for the approver, key ratios and risk"><figcaption>The recommendation, its reasons, what the memo missed, and the ratios behind it.</figcaption></figure>
+<p class="say">Here is the review. The recommendation is a counter offer of one and a half crore, not the five Rohan asked for. Why? The rationale says rule five point two failed, and the key ratios show it: everything is within policy except group exposure, in red. Rohan's group already owes the bank too much, so the most it can take on is the room left under the group limit. Then a condition it learned from Amaira, and a point for her attention that the credit memo missed: money that goes out and comes back within days. That is the second agent, checking the first one's work.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Code decides, the model writes</dt><dd>The proposal and the amount are computed by the utility stage in code before any model is called; the model only writes the note, and the lint rejects approval language. Same as notebook 04b, stages 4 and 5.</dd>
+  <dt>Ratios from the checks</dt><dd>The key ratio tiles are read from the policy checks themselves (measured value and limit), so the summary can never disagree with the evidence.</dd>
+  <dt>Points for the approver</dt><dd>The memo cross-check is notebook 04b's multi-agent stage: <code>missed_leads</code> compares the memo agent's draft with Session 2's case-file leads.</dd></dl></div>
+<p class="ask"><b>Ask the room:</b> if you were Amaira, what would you want to see before you trust this number? (Answer: the next tab.)</p>
+
+<!-- ====================================================================== 5 -->
+<h2 id="s5">5. The evidence: policy checks</h2>
+<p class="meta">The Policy checks tab · also show Financials, Banking conduct, Group exposure</p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>Every rule: the requirement, the actual value, the limit, pass or fail, and under each rule where the number came from.</li>
+<li>Rule 5.2 fails: the group's members and their exposure are listed in the evidence line.</li></ul></div>
+<figure><img src="img/workbench/05_checks.png" alt="The Policy checks tab: each rule with its requirement, actual value, limit and result"><figcaption>Every number traces back to a table, a statement or the graph query.</figcaption></figure>
+<p class="say">This is what makes the recommendation trustworthy. Every rule in the policy, the actual value, the limit, and underneath, where the number came from: which statement, which year, which table, which query. Nothing here came from the language model. The policy is plain code, and the model never computes a ratio. If a rule fails, Amaira can see exactly why, in one line.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Policy as code</dt><dd><code>run_checks</code> in <code>src/creditlens/agents/policy_checks.py</code> (line 220): each check returns the measured value, the threshold and an evidence string. Auditable by design.</dd></dl></div>
+
+<!-- ====================================================================== 6 -->
+<h2 id="s6">6. Where the facts came from</h2>
+<p class="meta">The two yellow notices, then the Repayments tab</p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>Above the tabs: <b>Core banking is unavailable. Exposure figures are from the replicated copy.</b> and <b>The repayment service is unavailable. Repayment history is estimated.</b></li>
+<li>Repayments tab: the core banking exposure and the repayment schedule, each tagged <b>Replica</b> or <b>Estimated</b>.</li></ul></div>
+<figure><img src="img/workbench/06_repayments.png" alt="The Repayments tab: core banking exposure and twelve instalments, tagged as replica and estimated"><figcaption>Without Docker the bank's systems are down, and the review says so.</figcaption></figure>
+<p class="say">Two yellow notices. Right now the bank's core banking system and its repayment service are both unreachable. The review still went ahead, because Amaira needs it, but it does not pretend. Exposure came from a replicated copy, and the repayment history is an estimate, and the screen says so above everything else. A review that hides where its numbers came from cannot be trusted. We will switch the real systems on in a moment.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Labelled fallbacks</dt><dd><code>connected_sensors</code> (server line 198) calls the Oracle adapter and the SOAP client from notebook 05b. The adapter falls back to its stand-in within three seconds (<code>src/creditlens/integrations/oracle.py</code> line 72); the SOAP client uses a timeout, a retry and a circuit breaker, then the labelled mock (<code>soap.py</code> line 166).</dd>
+  <dt>One breaker for everyone</dt><dd>The server keeps one repayment client (line 195), so after three failures its breaker opens and later reviews fall back instantly instead of each waiting four seconds.</dd></dl></div>
+
+<!-- ====================================================================== 7 -->
+<h2 id="s7">7. The processing log and the audit trail</h2>
+<p class="meta">The Activity tab</p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li><b>Processing log</b>: each step, what it found and how long it took. Core systems about four seconds; the memo cross-check about one second; the rest milliseconds.</li>
+<li><b>Audit trail</b>: one line so far, the review generated by the Credit Review Assistant, requested by Amaira.</li></ul></div>
+<figure><img src="img/workbench/07_activity.png" alt="The Activity tab: the processing log with durations, and the audit trail"><figcaption>The technical log for the engineer, the audit trail for the auditor.</figcaption></figure>
+<p class="say">Two records. The processing log is for the engineer: every step, what it found, how long it took. Look where the time goes: almost all of it is waiting for systems that are down. And the audit trail is for the auditor: who did what, and when. Right now it has one line, the review the assistant prepared. Keep an eye on it.</p>
+
+<!-- ====================================================================== 8 -->
+<h2 id="s8">8. A different user, a different region</h2>
+<p class="meta">User menu → <b>Lucky Grewal · Credit Analyst, West</b>; then type <code>#/application/A001</code> in the address bar</p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>The queue shrinks to the West region only.</li>
+<li>Opening a North application directly by its address: <b>Access denied. Lucky Grewal works in the West region; A001 is a North file.</b></li></ul></div>
+<figure><img src="img/workbench/08_analyst_queue.png" alt="The work queue as Lucky Grewal sees it: only West applications"><figcaption>The analyst's queue: only the West region.</figcaption></figure>
+<figure><img src="img/workbench/09_access_denied.png" alt="Access denied when the West analyst opens a North application"><figcaption>Typing another region's address does not help: the server refuses, and logs it.</figcaption></figure>
+<p class="say">Now I am Lucky Grewal, an analyst in the West region. My queue only shows West. What if I am curious, and type a North application's address straight into the browser? Access denied. The rule does not live in the screen; it lives on the server, in every request. Hiding a button is not security. Refusing the request is.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Checked on every request</dt><dd><code>get_app</code> (server line 180) checks the region on every call that touches an application, and writes <code>access_refused</code> to the audit log.</dd></dl></div>
+
+<!-- ====================================================================== 9 -->
+<h2 id="s9">9. The analyst tries to decide</h2>
+<p class="meta">As Lucky, open Rohan's application (A901) and click <b>Submit decision</b></p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>The decision panel already says: <b>Your role (Credit Analyst) does not carry approval authority.</b> Submit anyway.</li>
+<li>Under the button and in a message: <b>Lucky Grewal has the role analyst. Policy 7.3: only the Head of Credit decides.</b></li></ul></div>
+<figure><img src="img/workbench/10_refused.png" alt="The decision refused for the analyst, with the policy message under the Submit decision button"><figcaption>The server refuses before the paused review is touched.</figcaption></figure>
+<p class="say">Lucky can read the whole review, but cannot decide it. The panel says so, and I submit anyway. Refused. And notice who Lucky is: Rohan's own analyst. The person who prepared a file never approves it. Banks call that the four eyes principle, and here it is enforced on the server, before the paused review is even touched.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Check before resume</dt><dd><code>sign</code> (server line 354) checks the role first and returns 403, writing <code>signature_refused</code> to the audit log. Only then does it call <code>Command(resume=...)</code>. Inside the graph, the gate node checks the role again: two layers, as in notebook 04b's <code>sign()</code>.</dd>
+  <dt>The same rule everywhere</dt><dd>The command line (<code>src/creditlens/agents/approve.py</code> line 36) and the Slack button (<code>src/creditlens/integrations/slack.py</code> line 126) enforce the same rule. One gate, many channels.</dd></dl></div>
+
+<!-- ====================================================================== 10 -->
+<h2 id="s10">10. Amaira decides</h2>
+<p class="meta">User menu → <b>Amaira Dey</b>; open A901; keep the proposed condition, <b>+ Add condition</b>, type a remark, <b>Submit decision</b></p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>Decision: <b>Counter-offer</b>; sanctioned amount 15000 (₹1.50 Cr).</li>
+<li>Conditions: the proposed compliance review (applies to: group over its limit), plus a new one: <i>Personal guarantee from the managing director (rule 6.2)</i>, applies to: all applications.</li>
+<li>After submitting: the status changes to <b>Counter-offer</b>; the decision panel says <b>Recorded</b>, with who and when; and <b>Added to learned conditions</b>.</li></ul></div>
+<figure><img src="img/workbench/11_decided.png" alt="The decision recorded: counter-offer of 1.50 crore with two conditions, decided by Amaira Dey"><figcaption>The decision is recorded with its conditions, remarks, who decided and when.</figcaption></figure>
+<p class="say">Now I am Amaira. I agree with the counter offer. I keep the compliance review it proposed, and I add a condition of my own: a personal guarantee from the managing director. A remark for the file, and submit. The paused graph resumes from its checkpoint, records my decision, and learns. The new condition is added to what the assistant has learned, so next time it will propose it. It learns conditions I can review. It never learns to approve.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Resume from the checkpoint</dt><dd>The decision is passed into the paused graph with <code>Command(resume=decision)</code>; the <code>learn</code> node runs the critic and updates the feedback file.</dd>
+  <dt>Each condition keeps its scope</dt><dd>The "Applies to" setting is the trigger the condition is learned for. An earlier version saved every proposed condition as "all applications", which would have quietly widened a condition Amaira only wanted for over-limit groups. What an agent may learn, and for which files, is a design decision.</dd></dl></div>
+
+<!-- ====================================================================== 11 -->
+<h2 id="s11">11. Raising the exception, twice</h2>
+<p class="meta">Click <b>Raise exceptions</b>, then click it again; open the Exceptions tab</p>
+<div class="screen"><b class="h">On screen</b>
+<ul><li>First click: <b>CREDIT-1 raised</b>. Second click: <b>CREDIT-1 already exists</b>.</li>
+<li>The Exceptions tab: rule 5.2, its text, and ticket CREDIT-1.</li></ul></div>
+<figure><img src="img/workbench/12_exceptions.png" alt="The Exceptions tab with ticket CREDIT-1, and the two messages: raised, then already exists"><figcaption>Two clicks, one ticket.</figcaption></figure>
+<p class="say">Rule five point two failed, so compliance needs an exception ticket in Jira. I raise it. Then, the way a nervous user or a retry would, I raise it again. Already exists. One ticket, not two. Every write the assistant makes carries a key, the application plus the rule, so doing it twice changes nothing.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Idempotency key</dt><dd><code>file_ticket</code> (<code>src/creditlens/mcp_jira/client.py</code> line 92) sends <code>A901:5.2</code> as the key; the MCP server returns the existing ticket instead of creating a new one. Called from the server's <code>tickets</code> endpoint (line 384).</dd>
+  <dt>Least privilege</dt><dd>The MCP server offers three tools only: create, get and search issues. The assistant cannot close, assign or delete anything.</dd></dl></div>
+
+<!-- ====================================================================== 12 -->
+<h2 id="s12">12. Notifying the approver</h2>
+<p class="meta">Click <b>Notify approver</b></p>
+<figure><img src="img/workbench/13_notify.png" alt="The notification preview: the message the Head of Credit would receive in the credit approvals channel"><figcaption>Test mode: the message is shown, not posted.</figcaption></figure>
+<p class="say">In a bank, the Head of Credit is rarely sitting at this screen. So the workbench can notify her in the approvals channel: the application, the recommendation, the risk, and buttons. And if she clicks approve on her phone, the very same rule applies: only the account mapped to the Head of Credit can decide.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>One gate, many channels</dt><dd>Slack decisions go through <code>handle_decision</code> (<code>slack.py</code> line 126), which maps Slack users to bank users (<code>SLACK_USER_MAP</code>) and refuses anyone who is not the Head of Credit, before resuming anything.</dd></dl></div>
+
+<!-- ====================================================================== 13 -->
+<h2 id="s13">13. Learned conditions</h2>
+<p class="meta">Left menu → <b>Learned conditions</b></p>
+<figure><img src="img/workbench/14_learned.png" alt="The learned conditions page: each condition, what it applies to, and how often it was applied"><figcaption>What the assistant has learned, and for which applications.</figcaption></figure>
+<p class="say">This is the assistant's memory, in plain view. Each condition the Head of Credit added, what kind of application it applies to, and how often. The compliance review applies only to groups over their limit; the guarantee to every application. Nothing here changes a policy threshold, and nothing here can approve a loan. If this list ever looked wrong, a person could see it and fix it.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Visible memory</dt><dd><code>/api/memory</code> (server line 431) reads the feedback file that notebook 04b's <code>learn</code> writes. Long-term memory should be something a person can inspect, not something hidden inside a model.</dd></dl></div>
+
+<!-- ====================================================================== 14 -->
+<h2 id="s14">14. The audit log</h2>
+<p class="meta">Left menu → <b>Audit log</b></p>
+<figure><img src="img/workbench/15_audit.png" alt="The audit log: review generated, access denied, decision refused, decision submitted, conditions learned, exception ticket raised and already exists, approver notified"><figcaption>Everything that happened in the demo, newest first.</figcaption></figure>
+<p class="say">And here is the whole demo, as an auditor would see it. The review the assistant generated. Lucky's attempt to open a North file, refused. Lucky's attempt to decide, refused. Amaira's decision, with its conditions. What the assistant learned. The ticket raised, and the second attempt that changed nothing. The notification. Who, what and when, for every step. The agent prepared, Amaira decided, and every step has a name against it.</p>
+<div class="why"><b class="h">Why it is built this way</b><dl>
+  <dt>Append-only record</dt><dd>Every action calls <code>audit</code> (server line 165), which appends one line to <code>data/cache/workbench_audit.jsonl</code>. The page reads it through <code>/api/audit</code> (line 425), filtered by the user's region.</dd></dl></div>
+
+<!-- ====================================================================== DOCKER -->
+<h2 id="docker">With Docker: the real systems</h2>
+<p class="meta">Optional. Prepare before the session; Oracle needs about two minutes the first time.</p>
+<div class="screen"><b class="h">Set up</b></div>
+<div class="cmd">docker compose -f infra/docker-compose.yml --profile legacy up -d oracle soap-mock</div>
+<div class="screen"><b class="h">Then</b>
+<ol><li>Add to <code>.env</code>: <code>ORACLE_DSN=localhost:1521/FREEPDB1</code>, <code>ORACLE_USER=creditlens</code>, <code>ORACLE_PASSWORD=creditlens</code>.</li>
+<li>Stop the workbench (Ctrl+C) and start it again, so it reads <code>.env</code>.</li>
+<li>Run the credit review on Rohan's application again.</li></ol>
+<p><b>What changes:</b> under Connected systems, core banking and repayments say <b>Live</b>; the two yellow notices disappear; the Repayments tab tags say <b>Live</b>; the processing log says <code>Oracle oracle</code> and <code>SOAP soap</code>, much faster than the four seconds the fallback took. The live Oracle table also disagrees with the replicated copy on some companies (for example C003), which is a lesson in itself: the system of record wins.</p></div>
+<p class="say">Now the bank's systems are running, as real services on this laptop. Same application, same code, run the review again. The notices are gone, the sources say live, and the core systems step is much faster. Nothing in the agent changed. That is the point of labelling every fact: it moves from a laptop to production without changing its code.</p>
+<p class="ask"><b>Memory:</b> on an 8 GB laptop, run only the <code>legacy</code> profile for this demo. Stop it afterwards: <code>docker compose -f infra/docker-compose.yml --profile legacy stop</code>.</p>
+
+<!-- ====================================================================== BEHIND -->
+<h2 id="behind">Behind the screen: where each piece lives</h2>
+<p class="meta">For the questions after the demo, or to switch to code.</p>
+<div class="tbl"><table>
+<thead><tr><th>On screen</th><th>Server (<code>app/workbench/server.py</code>)</th><th>From the notebooks and the library</th></tr></thead>
+<tbody>
+<tr><td>Review assistant starting / online</td><td><code>load_agent</code> line 56, <code>build_graph</code> line 77</td><td>notebook 04b's code cells, run once; its seven nodes and <code>ReviewState</code></td></tr>
+<tr><td>Work queue, access denied</td><td><code>queue</code> line 242, <code>visible</code> line 161, <code>get_app</code> line 180</td><td><code>data/raw/registry/users.csv</code>: roles and regions</td></tr>
+<tr><td>Run credit review, progress, processing log</td><td><code>prepare</code> line 267, <code>describe</code> line 323</td><td>04b stages 2 to 8; the graph streamed node by node</td></tr>
+<tr><td>Data-source notices, Repayments tab</td><td><code>connected_sensors</code> line 198, the shared client line 195</td><td>05b: <code>integrations/oracle.py</code> (adapter, fallback), <code>integrations/soap.py</code> (timeout, retry, breaker, mock)</td></tr>
+<tr><td>Submit decision, refused</td><td><code>sign</code> line 354</td><td>04b: <code>interrupt()</code>, <code>Command(resume=...)</code>, <code>learn</code></td></tr>
+<tr><td>Raise exceptions</td><td><code>tickets</code> line 384</td><td>05b: <code>mcp_jira/client.py</code> line 92, the idempotency key</td></tr>
+<tr><td>Notify approver</td><td><code>notify</code> line 408</td><td>05b: <code>integrations/slack.py</code>, <code>handle_decision</code> line 126</td></tr>
+<tr><td>Learned conditions</td><td><code>memory</code> line 431</td><td>04b: <code>learn</code>, <code>data/cache/underwriter_feedback.json</code></td></tr>
+<tr><td>Audit log</td><td><code>audit</code> line 165, <code>all_audit</code> line 425</td><td><code>data/cache/workbench_audit.jsonl</code></td></tr>
+<tr><td>The page itself</td><td colspan="2"><code>app/workbench/index.html</code>: one HTML file, no build step: <code>renderQueue</code> line 224, <code>tabHtml</code> line 305, <code>decisionHtml</code> line 351, <code>runReview</code> line 396</td></tr>
+</tbody></table></div>
+
+<!-- ====================================================================== QA -->
+<h2 id="qa">Questions the room will ask</h2>
+<dl class="qa">
+  <dt>Is the recommendation written by a language model?</dt>
+  <dd>The wording of the note is, through the gateway (offline today, a stand-in that writes from the facts). The recommendation and the amount are not: they are computed in code before the model is called, and code overwrites whatever proposal the model writes.</dd>
+  <dt>Could an analyst bypass the screen and call the API directly?</dt>
+  <dd>No. The region and authority checks are on the server, in every request. The screen only reflects them. Try it with the address bar, as in step 8.</dd>
+  <dt>Why does the first review take about five seconds?</dt>
+  <dd>Almost all of it is the repayment service timing out (it is down without Docker). After three failures the circuit breaker opens and the fallback is instant. With Docker running, the systems answer instead of timing out, so the review is much faster.</dd>
+  <dt>What if the server restarts in the middle of a review?</dt>
+  <dd>This training server keeps checkpoints in memory, so a restart starts clean. In production the checkpointer would be a database, and a paused review would survive a restart, as the command line already does with its SQLite checkpointer.</dd>
+  <dt>Is this real data?</dt>
+  <dd>No. Good Bank, its borrowers and their files are synthetic. No real person's data is used.</dd>
+  <dt>How would this go to production?</dt>
+  <dd>That is Session 4: a real risk model, masking of personal data, guardrails, an evaluation gate in CI, a container, then monitoring and incidents.</dd>
+</dl>
+
+<!-- ====================================================================== RESET -->
+<h2 id="reset">Reset and troubleshooting</h2>
+<div class="tbl"><table>
+<thead><tr><th>Problem</th><th>What to do</th></tr></thead>
+<tbody>
+<tr><td>"Review assistant starting" for more than two minutes</td><td>Check the terminal for an error. The assistant needs <code>data/story/</code> and <code>data/scenarios/</code>: run <code>python -m creditlens.scenarios.story build</code> and <code>python -m creditlens.scenarios</code>, then restart.</td></tr>
+<tr><td>Port 8090 is already in use</td><td>PowerShell: <code>$env:WORKBENCH_PORT=8091</code>, then start again and open <code>localhost:8091</code>.</td></tr>
+<tr><td>"Re-run credit review" is greyed out</td><td>The application is already decided. Restart the server for a clean queue.</td></tr>
+<tr><td>Start the demo again from zero</td><td>Ctrl+C, delete <code>data/cache/workbench_audit.jsonl</code> and <code>data/cache/jira_workbench.json</code>, start again.</td></tr>
+<tr><td>The page looks stale after changing users</td><td>Click <b>Work queue</b> in the left menu; the user's queue reloads.</td></tr>
+</tbody></table></div>
+<div class="box"><b>Close the demo with one line.</b> The agent prepares, the screen explains, the server enforces, and the audit log keeps every step.</div>
+</main>
+</body>
+</html>

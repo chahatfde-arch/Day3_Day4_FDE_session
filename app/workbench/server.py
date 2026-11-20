@@ -456,5 +456,5 @@ def http_error(_, exc: HTTPException):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("WORKBENCH_PORT", "8090"))
-    print(f"Good Bank Credit Review Workbench on http://localhost:{port}  (the agent loads in the background, about a minute)")
+    print(f"Good Bank Credit Workbench on http://localhost:{port}  (the review assistant needs about a minute to start)")
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
