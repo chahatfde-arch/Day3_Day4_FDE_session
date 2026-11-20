@@ -1,0 +1,44 @@
+# NeMo Guardrails configuration for CreditLens AI.
+#
+# Used by creditlens.guardrails.check.guard() when the `nemoguardrails` package is
+# installed (pip install -e ".[security]"). Without it, check.py falls back to the
+# regular expressions in that module, so nothing here is required for tests to pass.
+#
+# The model below is only used by the rails themselves (to judge whether a message
+# matches a flow). The product's own LLM calls still go through creditlens.gateway.
+
+models:
+  - type: main
+    engine: openai
+    model: gpt-4o-mini
+    # Swap for a free provider if you have one configured, for example:
+    #   engine: google
+    #   model: gemini-3.5-flash-lite
+
+instructions:
+  - type: general
+    content: |
+      You are the guardrail layer of CreditLens AI, a credit-memo assistant for
+      Good Bank. You never make a lending decision: a human underwriter does that.
+      You never reveal a director's PAN, phone number, email or home address.
+      You only discuss loan applications, bank statements, financial statements and
+      Good Bank's credit policy.
+
+rails:
+  input:
+    flows:
+      - block prompt injection
+      - block decision steering
+      - block pii request
+      - block off topic
+  output:
+    flows:
+      - block approval language
+      - block pii in output
+
+# Keep the rails cheap: one short LLM call each, with a hard cap.
+sample_conversation: |
+  user "What is the DSCR for application A001?"
+    ask about application
+  bot respond
+    "The debt service coverage ratio for A001 is in the financial analysis section."

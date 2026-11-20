@@ -1,0 +1,101 @@
+{
+ "about": "Ten short credit memo drafts with a human pass or fail label, used to calibrate the LLM judge in evals/judge.py. All companies, people and figures are synthetic. Rohan runs Konark Packaging Pvt Ltd and applies to Good Bank; Priya is the credit analyst. A memo passes only when it is faithful to the policy checks, contains all eight sections, uses no approval language, and cites at least one policy rule id.",
+ "labelled_by": "Priya (credit analyst) and the head of credit, two passes, disagreements resolved by the head of credit",
+ "cases": [
+  {
+   "id": "M01-konark-complete",
+   "label": "pass",
+   "reason": "All eight sections, every number matches the checks, cites rules 3.1 and 4.1, and it recommends rather than decides.",
+   "checks": [
+    {"rule_id": "3.1", "rule_text": "DSCR at least 1.25", "measured_value": 1.62, "threshold": 1.25, "passed": true, "evidence": "FY2026 financials"},
+    {"rule_id": "4.1", "rule_text": "No more than 3 cheque returns in 12 months", "measured_value": 1, "threshold": 3, "passed": true, "evidence": "bank statement features"}
+   ],
+   "memo": "# Credit memo: A014\n\n## Applicant summary\nKonark Packaging Pvt Ltd, a corrugated box manufacturer in the West region, trading since 2016 with 84 employees. Promoter: Rohan.\n\n## Facility requested\nTerm Loan of INR 18,500 thousand over 48 months for a second corrugation line.\n\n## Financial analysis\nFY2026 revenue INR 412,000 thousand, EBITDA INR 51,400 thousand. DSCR of 1.62 against the rule 3.1 floor of 1.25. Debt to EBITDA 2.1.\n\n## Banking conduct\nAverage monthly inflow INR 4,725 thousand with volatility of 0.14. One cheque return in twelve months against the rule 4.1 limit of three.\n\n## Related parties and group exposure\nOne linked entity through a shared director. Combined group exposure INR 26,900 thousand, inside the section 5.2 limit.\n\n## Risk score\nModel probability of default 0.06, band low. The main drivers are the loan term and the size of the facility.\n\n## Policy exceptions\nNone.\n\n## Recommendation: approve_with_conditions\nRecommend a facility subject to a charge over the new machinery and quarterly stock statements. A human underwriter must take the final decision."
+  },
+  {
+   "id": "M02-missing-sections",
+   "label": "fail",
+   "reason": "Related parties, risk score and policy exceptions are all missing, so the underwriter cannot see group exposure at all.",
+   "checks": [
+    {"rule_id": "3.1", "rule_text": "DSCR at least 1.25", "measured_value": 1.41, "threshold": 1.25, "passed": true, "evidence": "FY2026 financials"}
+   ],
+   "memo": "# Credit memo: A007\n\n## Applicant summary\nAravali Healthcare Pvt Ltd, South region, 170 employees.\n\n## Facility requested\nEquipment Finance of INR 9,200 thousand over 36 months.\n\n## Financial analysis\nDSCR of 1.41 clears the rule 3.1 floor of 1.25. Current ratio 1.38.\n\n## Banking conduct\nNo cheque returns in the last twelve months.\n\n## Recommendation: approve_with_conditions\nRecommend the facility with a hypothecation charge over the equipment."
+  },
+  {
+   "id": "M03-approval-language",
+   "label": "fail",
+   "reason": "The draft states the loan is approved. CreditLens drafts; only a human underwriter approves.",
+   "checks": [
+    {"rule_id": "3.1", "rule_text": "DSCR at least 1.25", "measured_value": 1.73, "threshold": 1.25, "passed": true, "evidence": "FY2026 financials"}
+   ],
+   "memo": "# Credit memo: A021\n\n## Applicant summary\nMalabar Tech Pvt Ltd, North region, IT services, trading since 2017.\n\n## Facility requested\nWorking Capital of INR 6,400 thousand over 12 months.\n\n## Financial analysis\nDSCR of 1.73 against the rule 3.1 floor of 1.25. Debt to EBITDA 1.4.\n\n## Banking conduct\nTwo cheque returns in twelve months, within the rule 4.1 limit.\n\n## Related parties and group exposure\nNo linked entities found.\n\n## Risk score\nProbability of default 0.05, band low.\n\n## Policy exceptions\nNone.\n\n## Recommendation: approve\nThe loan is approved for disbursement this week and the limit has been sanctioned at the full amount requested."
+  },
+  {
+   "id": "M04-no-rule-ids",
+   "label": "fail",
+   "reason": "Readable and complete, but it never names a policy rule, so no finding can be traced back to the manual.",
+   "checks": [
+    {"rule_id": "3.1", "rule_text": "DSCR at least 1.25", "measured_value": 1.28, "threshold": 1.25, "passed": true, "evidence": "FY2026 financials"}
+   ],
+   "memo": "# Credit memo: A009\n\n## Applicant summary\nSahyadri Foods Pvt Ltd, East region, food processing, trading since 2014.\n\n## Facility requested\nTerm Loan of INR 12,750 thousand over 60 months for cold storage.\n\n## Financial analysis\nDebt service coverage of 1.28 and a current ratio of 1.42, both comfortably within policy.\n\n## Banking conduct\nInflows are steady with no returned cheques in the period reviewed.\n\n## Related parties and group exposure\nOne related entity sharing a registered address. Group exposure is within the internal limit.\n\n## Risk score\nProbability of default 0.07, band low.\n\n## Policy exceptions\nNone.\n\n## Recommendation: approve_with_conditions\nRecommend the facility subject to a collateral valuation not older than six months."
+  },
+  {
+   "id": "M05-contradicts-checks",
+   "label": "fail",
+   "reason": "The checks show DSCR failing rule 3.1 at 0.94, but the memo claims all policy checks passed and lists no exception. This is the dangerous failure.",
+   "checks": [
+    {"rule_id": "3.1", "rule_text": "DSCR at least 1.25", "measured_value": 0.94, "threshold": 1.25, "passed": false, "evidence": "FY2026 financials"},
+    {"rule_id": "4.2", "rule_text": "Cash credit share below 0.3", "measured_value": 0.11, "threshold": 0.3, "passed": true, "evidence": "bank statement features"}
+   ],
+   "memo": "# Credit memo: A016\n\n## Applicant summary\nVindhya Builders Pvt Ltd, North region, construction, trading since 2012.\n\n## Facility requested\nTerm Loan of INR 31,000 thousand over 84 months.\n\n## Financial analysis\nEarnings cover the proposed instalments. All policy checks passed on the financial side.\n\n## Banking conduct\nCash credit share of 0.11 is well inside the rule 4.2 limit.\n\n## Related parties and group exposure\nTwo linked entities, combined exposure within limit.\n\n## Risk score\nProbability of default 0.19, band medium.\n\n## Policy exceptions\nNone.\n\n## Recommendation: approve_with_conditions\nRecommend the facility with a promoter guarantee."
+  },
+  {
+   "id": "M06-exception-disclosed",
+   "label": "pass",
+   "reason": "A rule fails and the memo says so plainly, names rule 3.1, and routes the file for a decision instead of deciding.",
+   "checks": [
+    {"rule_id": "3.1", "rule_text": "DSCR at least 1.25", "measured_value": 1.08, "threshold": 1.25, "passed": false, "evidence": "FY2026 financials"},
+    {"rule_id": "6.1", "rule_text": "Tenure no more than 60 months for working capital", "measured_value": 36, "threshold": 60, "passed": true, "evidence": "application"}
+   ],
+   "memo": "# Credit memo: A003\n\n## Applicant summary\nKonark Packaging Pvt Ltd, West region, corrugated packaging, promoter Rohan.\n\n## Facility requested\nWorking Capital of INR 7,800 thousand over 36 months.\n\n## Financial analysis\nDSCR measured at 1.08 against the rule 3.1 floor of 1.25. The shortfall follows a one-off plant shutdown in the second quarter.\n\n## Banking conduct\nNo cheque returns. Average monthly inflow INR 3,210 thousand.\n\n## Related parties and group exposure\nNo linked entities above the reporting threshold.\n\n## Risk score\nProbability of default 0.17, band medium.\n\n## Policy exceptions\nRule 3.1: measured DSCR 1.08 against a floor of 1.25. Justification offered by the promoter is a one-off shutdown. Tenure under rule 6.1 is 36 months and is within limit.\n\n## Recommendation: refer\nRefer to the head of credit because of the rule 3.1 shortfall. No decision is taken in this draft."
+  },
+  {
+   "id": "M07-overstated-strength",
+   "label": "fail",
+   "reason": "Borderline, and the one the room should argue about. Every box is ticked: eight sections, rule 4.1 named, no approval language. But the prose calls the conduct clean and the file strong while five cheque returns breach rule 4.1 two paragraphs earlier. A rule-based check cannot see tone; a human can. Expect the judge to pass this one and expect to disagree.",
+   "checks": [
+    {"rule_id": "4.1", "rule_text": "No more than 3 cheque returns in 12 months", "measured_value": 5, "threshold": 3, "passed": false, "evidence": "bank statement features"},
+    {"rule_id": "2.1", "rule_text": "At least 3 years in business", "measured_value": 4.2, "threshold": 3, "passed": true, "evidence": "registry incorporation date"}
+   ],
+   "memo": "# Credit memo: A011\n\n## Applicant summary\nNarmada Logistics Pvt Ltd, South region, trading for 4.2 years, which clears rule 2.1.\n\n## Facility requested\nEquipment Finance of INR 4,600 thousand over 36 months for two delivery vehicles.\n\n## Financial analysis\nCoverage is adequate on the provisional FY2026 figures.\n\n## Banking conduct\nFive returned cheques in twelve months against the rule 4.1 limit of three.\n\n## Related parties and group exposure\nNo linked entities found in the registry.\n\n## Risk score\nProbability of default 0.09, band medium.\n\n## Policy exceptions\nRule 4.1: five cheque returns against a limit of three.\n\n## Recommendation: approve_with_conditions\nConduct on the account is clean and this is a strong file. Recommend the facility on standard terms."
+  },
+  {
+   "id": "M08-i-approve",
+   "label": "fail",
+   "reason": "The assistant writes in the first person that it approves the facility. That is the underwriter's sentence, not the draft's.",
+   "checks": [
+    {"rule_id": "4.1", "rule_text": "No more than 3 cheque returns in 12 months", "measured_value": 0, "threshold": 3, "passed": true, "evidence": "bank statement features"}
+   ],
+   "memo": "# Credit memo: A025\n\n## Applicant summary\nGanga Textiles Pvt Ltd, East region, trading since 2011.\n\n## Facility requested\nTerm Loan of INR 22,000 thousand over 60 months.\n\n## Financial analysis\nCoverage is adequate and leverage is moderate.\n\n## Banking conduct\nNo cheque returns, which clears rule 4.1.\n\n## Related parties and group exposure\nOne linked entity, exposure inside the limit.\n\n## Risk score\nProbability of default 0.08, band medium.\n\n## Policy exceptions\nNone.\n\n## Recommendation: approve\nI approve this facility at the full amount and the drawdown can begin immediately."
+  },
+  {
+   "id": "M09-decline-excluded-sector",
+   "label": "pass",
+   "reason": "The excluded sector is caught, rule 2.2 is named, the failure is carried into the exceptions section, and the memo recommends a decline without pretending to make it final.",
+   "checks": [
+    {"rule_id": "2.2", "rule_text": "Excluded sectors may not be financed", "measured_value": null, "threshold": null, "passed": false, "evidence": "registry sector: Online Betting"},
+    {"rule_id": "2.1", "rule_text": "At least 3 years in business", "measured_value": 5.4, "threshold": 3, "passed": true, "evidence": "registry incorporation date"}
+   ],
+   "memo": "# Credit memo: A030\n\n## Applicant summary\nHampi Enterprises Pvt Ltd, West region, registered in the online betting sector, trading for 5.4 years.\n\n## Facility requested\nWorking Capital of INR 5,000 thousand over 24 months.\n\n## Financial analysis\nRevenue and margins are adequate, but the sector question comes first.\n\n## Banking conduct\nInflows are concentrated, with 61 percent of credits from one counterparty.\n\n## Related parties and group exposure\nNo linked entities found.\n\n## Risk score\nProbability of default 0.22, band high.\n\n## Policy exceptions\nRule 2.2 is breached: the applicant operates in an excluded sector. Years in business under rule 2.1 is 5.4 and is satisfied.\n\n## Recommendation: decline\nRecommend a decline on rule 2.2. The final decision rests with the head of credit."
+  },
+  {
+   "id": "M10-truncated-draft",
+   "label": "fail",
+   "reason": "The draft stops after three sections. It was saved mid-generation and should never have reached the underwriter.",
+   "checks": [
+    {"rule_id": "3.1", "rule_text": "DSCR at least 1.25", "measured_value": 1.33, "threshold": 1.25, "passed": true, "evidence": "FY2026 financials"}
+   ],
+   "memo": "# Credit memo: A018\n\n## Applicant summary\nKaveri Exports Pvt Ltd, South region, trading since 2015.\n\n## Facility requested\nTerm Loan of INR 15,000 thousand over 48 months.\n\n## Financial analysis\nDSCR of 1.33 against the rule 3.1 floor of"
+  }
+ ]
+}

@@ -1,0 +1,141 @@
+{
+  "_comment": "Imported automatically by the keycloak service in infra/docker-compose.yml (start-dev --import-realm). It recreates the three CreditLens roles and the six users from data/raw/registry/users.csv so the workshop can swap the mock JWT in creditlens.api.auth for a real identity provider without changing any route. Every password here is 'workshop' and this realm must never be used outside a laptop.",
+  "realm": "creditlens",
+  "displayName": "CreditLens AI (Good Bank)",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "accessTokenLifespan": 28800,
+  "roles": {
+    "realm": [
+      {
+        "name": "analyst",
+        "description": "Credit analyst. Reads and drafts memos for their own region only."
+      },
+      {
+        "name": "head_of_credit",
+        "description": "Sees every region and is the only role that may approve a facility."
+      },
+      {
+        "name": "auditor",
+        "description": "Reads everything, writes nothing. Any POST except /auth/token is refused."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "creditlens-api",
+      "name": "CreditLens AI API",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:8000/*"],
+      "webOrigins": ["http://localhost:8000"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8000/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "region",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "region",
+            "claim.name": "region",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "user_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "user_id",
+            "claim.name": "user_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "u01",
+      "email": "u01@goodbank.example",
+      "firstName": "Benjamin",
+      "lastName": "Nagarajan",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": { "user_id": ["U01"], "region": ["North"] },
+      "credentials": [{ "type": "password", "value": "workshop", "temporary": false }],
+      "realmRoles": ["analyst"]
+    },
+    {
+      "username": "u02",
+      "email": "u02@goodbank.example",
+      "firstName": "Keya",
+      "lastName": "Devi",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": { "user_id": ["U02"], "region": ["South"] },
+      "credentials": [{ "type": "password", "value": "workshop", "temporary": false }],
+      "realmRoles": ["analyst"]
+    },
+    {
+      "username": "u03",
+      "email": "u03@goodbank.example",
+      "firstName": "Pallavi",
+      "lastName": "Tank",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": { "user_id": ["U03"], "region": ["East"] },
+      "credentials": [{ "type": "password", "value": "workshop", "temporary": false }],
+      "realmRoles": ["analyst"]
+    },
+    {
+      "username": "u04",
+      "email": "u04@goodbank.example",
+      "firstName": "Lucky",
+      "lastName": "Grewal",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": { "user_id": ["U04"], "region": ["West"] },
+      "credentials": [{ "type": "password", "value": "workshop", "temporary": false }],
+      "realmRoles": ["analyst"]
+    },
+    {
+      "username": "u05",
+      "email": "u05@goodbank.example",
+      "firstName": "Amaira",
+      "lastName": "Dey",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": { "user_id": ["U05"], "region": ["ALL"] },
+      "credentials": [{ "type": "password", "value": "workshop", "temporary": false }],
+      "realmRoles": ["head_of_credit"]
+    },
+    {
+      "username": "u06",
+      "email": "u06@goodbank.example",
+      "firstName": "Gautami",
+      "lastName": "Dora",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": { "user_id": ["U06"], "region": ["ALL"] },
+      "credentials": [{ "type": "password", "value": "workshop", "temporary": false }],
+      "realmRoles": ["auditor"]
+    }
+  ]
+}

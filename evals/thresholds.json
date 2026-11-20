@@ -1,0 +1,6 @@
+{
+ "_about": "The numbers CI will not let the project drop below. Raise a threshold only after the metric has been above it for a while; never lower one to make a build green without writing down why in the pull request.",
+ "extraction_overall": 0.85,
+ "retrieval_hybrid_recall_at_5": 0.7,
+ "judge_agreement": 0.8
+}

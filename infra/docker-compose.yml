@@ -1,0 +1,378 @@
+# Local services for CreditLens AI.
+#
+# Everything is grouped into profiles so nobody has to start twelve containers to run
+# one milestone. A service with no profile always starts; a service with a profile
+# starts only when you ask for it.
+#
+#   docker compose -f infra/docker-compose.yml up -d                        # sqlserver only
+#   docker compose -f infra/docker-compose.yml --profile core up -d         # + the API
+#   docker compose -f infra/docker-compose.yml --profile observability up -d# Langfuse
+#   docker compose -f infra/docker-compose.yml --profile ml up -d           # MLflow
+#   docker compose -f infra/docker-compose.yml --profile retrieval up -d    # Qdrant, Neo4j
+#   docker compose -f infra/docker-compose.yml --profile security up -d     # Keycloak
+#   docker compose -f infra/docker-compose.yml --profile legacy up -d       # Oracle, SOAP
+#
+# Stop everything and reclaim the disk: see infra/teardown.md.
+#
+# Every password here is a throwaway for a local workshop. Nothing in this file should
+# ever be exposed to a network you do not control.
+
+services:
+
+  # =========================================================================
+  # Default: SQL Server, the alternative to the SQLite file (milestone 2)
+  # =========================================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: creditlens-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"          # free, development and test use only
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"   # change it, and match DATABASE_URL in .env
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 10
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    entrypoint: ["/bin/bash", "-c", "/opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"IF DB_ID('creditlens') IS NULL CREATE DATABASE creditlens\""]
+    restart: "no"
+
+  # =========================================================================
+  # profile: core - the CreditLens API itself (milestone 3)
+  # =========================================================================
+  api:
+    profiles: ["core"]
+    build:
+      context: ..                     # the repository root: the build needs src/
+      dockerfile: infra/Dockerfile
+    image: creditlens-api:local
+    container_name: creditlens-api
+    env_file:
+      - ../.env                       # copy .env.example to .env first
+    environment:
+      # The SQLite file and the generated data come in as a bind mount, so the image
+      # stays stateless and `docker compose down` never deletes your data.
+      DATABASE_URL: "sqlite:////app/creditlens.db"
+      LANGFUSE_HOST: "http://langfuse-web:3000"
+      CORS_ORIGINS: "*"
+      API_DEV_AUTH: "1"               # set to 0 for anything that is not a workshop
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+      - ../creditlens.db:/app/creditlens.db
+    restart: unless-stopped
+
+  # =========================================================================
+  # profile: observability - Langfuse v3 self-hosted (milestone 3)
+  #
+  # Langfuse v3 is not one container. The web app serves the UI and the API, a worker
+  # chews through the ingestion queue, Postgres holds the relational data, ClickHouse
+  # holds the traces and observations, Redis is the queue, and MinIO is the S3-compatible
+  # blob store for large event payloads. This follows the official Langfuse
+  # docker-compose from the self-hosting docs. If it drifts, trust
+  # https://langfuse.com/self-hosting/docker-compose over this file.
+  #
+  # After `up -d`, open http://localhost:3000, create an account and a project, copy the
+  # public and secret keys into .env, and set LANGFUSE_HOST=http://localhost:3000.
+  # =========================================================================
+  langfuse-web:
+    profiles: ["observability"]
+    image: langfuse/langfuse:3
+    container_name: creditlens-langfuse-web
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+      langfuse-clickhouse:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@langfuse-postgres:5432/postgres
+      SALT: "local-workshop-salt-change-me"
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"  # 64 hex chars
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: "local-workshop-secret-change-me"
+      TELEMETRY_ENABLED: "true"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://langfuse-clickhouse:9000
+      CLICKHOUSE_URL: http://langfuse-clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: miniosecret
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: "events/"
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: "6379"
+      REDIS_AUTH: redispassword
+    restart: unless-stopped
+
+  langfuse-worker:
+    profiles: ["observability"]
+    image: langfuse/langfuse-worker:3
+    container_name: creditlens-langfuse-worker
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+      langfuse-clickhouse:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+    environment:
+      # Identical to langfuse-web: the two processes share one configuration.
+      DATABASE_URL: postgresql://postgres:postgres@langfuse-postgres:5432/postgres
+      SALT: "local-workshop-salt-change-me"
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      TELEMETRY_ENABLED: "true"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://langfuse-clickhouse:9000
+      CLICKHOUSE_URL: http://langfuse-clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: miniosecret
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: "events/"
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: "6379"
+      REDIS_AUTH: redispassword
+    restart: unless-stopped
+
+  langfuse-postgres:
+    profiles: ["observability"]
+    image: postgres:16-alpine
+    container_name: creditlens-langfuse-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - langfuse-postgres-data:/var/lib/postgresql/data
+
+  langfuse-clickhouse:
+    profiles: ["observability"]
+    image: clickhouse/clickhouse-server:24
+    container_name: creditlens-langfuse-clickhouse
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+    user: "101:101"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 1s
+    volumes:
+      - langfuse-clickhouse-data:/var/lib/clickhouse
+      - langfuse-clickhouse-logs:/var/log/clickhouse-server
+
+  langfuse-redis:
+    profiles: ["observability"]
+    image: redis:7-alpine
+    container_name: creditlens-langfuse-redis
+    command: ["redis-server", "--requirepass", "redispassword"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redispassword", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+  langfuse-minio:
+    profiles: ["observability"]
+    image: minio/minio
+    container_name: creditlens-langfuse-minio
+    # The entrypoint creates the bucket Langfuse expects before starting the server.
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniosecret
+    ports:
+      - "9090:9000"      # 9000 on the host is often taken; the container port is unchanged
+      - "9091:9001"      # MinIO console
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - langfuse-minio-data:/data
+
+  # =========================================================================
+  # profile: ml - MLflow tracking server (milestone 8)
+  #
+  # SQLite backend plus a local artifact folder: the smallest MLflow that still has a
+  # model registry. Set MLFLOW_TRACKING_URI=http://localhost:5000 in .env.
+  # =========================================================================
+  mlflow:
+    profiles: ["ml"]
+    # Keep the server on the same major version as the client (pip install mlflow). An
+    # MLflow 3 client cannot register a model on a 2.x server: /logged-models returns 404.
+    image: ghcr.io/mlflow/mlflow:v3.18.0
+    container_name: creditlens-mlflow
+    # One worker and no background job runner: by default MLflow 3 starts eight job
+    # processes (about 240 MB each) that a model registry does not need. Together that is
+    # about 2 GB, too much beside Oracle on an 8 GB laptop.
+    environment:
+      MLFLOW_SERVER_ENABLE_JOB_EXECUTION: "false"
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0 --port 5000
+      --workers 1
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    restart: unless-stopped
+
+  # =========================================================================
+  # profile: retrieval - Qdrant and Neo4j (milestone 5)
+  # =========================================================================
+  qdrant:
+    profiles: ["retrieval"]
+    image: qdrant/qdrant:latest
+    container_name: creditlens-qdrant
+    ports:
+      - "6333:6333"     # REST and the dashboard at http://localhost:6333/dashboard
+      - "6334:6334"     # gRPC
+    volumes:
+      - qdrant-data:/qdrant/storage
+    restart: unless-stopped
+    # Then set QDRANT_URL=http://localhost:6333 in .env.
+
+  neo4j:
+    profiles: ["retrieval"]
+    image: neo4j:5-community       # the community edition is free
+    container_name: creditlens-neo4j
+    environment:
+      NEO4J_AUTH: "neo4j/creditlens123"       # must be at least 8 characters
+      NEO4J_server_memory_heap_max__size: "1G"
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"     # Neo4j Browser
+      - "7687:7687"     # Bolt, the protocol the driver speaks
+    volumes:
+      - neo4j-data:/data
+    restart: unless-stopped
+    # Then set NEO4J_URI=bolt://localhost:7687, NEO4J_PASSWORD=creditlens123 in .env.
+
+  # =========================================================================
+  # profile: security - Keycloak in dev mode (milestone 9)
+  #
+  # Keycloak is what replaces the mock JWT in creditlens.api.auth when this stops being
+  # a workshop. `start-dev` keeps everything in memory, and the realm file is imported
+  # at startup, so the analyst / head_of_credit / auditor roles and their users are
+  # there every time. Admin console: http://localhost:8080 (admin / admin).
+  # =========================================================================
+  keycloak:
+    profiles: ["security"]
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: creditlens-keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    restart: unless-stopped
+
+  # =========================================================================
+  # profile: legacy - the systems a real bank actually has (milestone 7)
+  # =========================================================================
+  oracle:
+    profiles: ["legacy"]
+    # gvenzl/oracle-free is the free Oracle Database 23ai Free edition, prebuilt.
+    # First start takes several minutes while the database is created: be patient.
+    image: gvenzl/oracle-free:slim
+    container_name: creditlens-oracle
+    environment:
+      ORACLE_PASSWORD: creditlens           # the SYS and SYSTEM password
+      APP_USER: creditlens
+      APP_USER_PASSWORD: creditlens
+    ports:
+      - "1521:1521"
+    volumes:
+      # Every .sql file in this folder runs once, after the database is created.
+      - ./oracle:/container-entrypoint-initdb.d:ro
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+    restart: unless-stopped
+    # Then set ORACLE_DSN=localhost:1521/FREEPDB1, ORACLE_USER=creditlens,
+    # ORACLE_PASSWORD=creditlens in .env.
+
+  soap-mock:
+    profiles: ["legacy"]
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      args:
+        EXTRAS: "integrations"        # spyne lives here; the API image does not need it
+    image: creditlens-soap:local      # its own image, so it never overwrites the API image
+    container_name: creditlens-soap
+    # 0.0.0.0, not the default 127.0.0.1: inside a container, 127.0.0.1 is unreachable from the host.
+    command: ["python", "-m", "creditlens.integrations.soap_server", "--host", "0.0.0.0"]
+    healthcheck:                      # the image's default check calls the API on 8000
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8001/?wsdl', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../data:/app/data
+    restart: unless-stopped
+    # Then set SOAP_WSDL_URL=http://localhost:8001/?wsdl in .env.
+    # Add --slow or --flaky to the command to practise timeouts and circuit breakers.
+
+volumes:
+  sqlserver-data:
+  langfuse-postgres-data:
+  langfuse-clickhouse-data:
+  langfuse-clickhouse-logs:
+  langfuse-minio-data:
+  mlflow-data:
+  qdrant-data:
+  neo4j-data:
+  oracle-data:

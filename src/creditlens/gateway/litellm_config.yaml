@@ -1,0 +1,69 @@
+# LiteLLM proxy configuration for CreditLens AI.
+#
+# What this file is for: `creditlens.gateway.llm` already routes and falls back inside the
+# Python process. This file does the same job one layer out, as a server, so that a whole
+# room of laptops (or the Day 7 incident drill) can share one set of keys and one set of
+# limits. Start it with:  python -m creditlens.gateway.proxy
+#
+# Every line below has a comment, because this is the first YAML most of the room will read.
+
+model_list:
+  # --- The primary. Tried first for every request. -------------------------------------
+  - model_name: creditlens-primary          # the name OUR code asks for
+    litellm_params:
+      model: gemini/gemini-3.5-flash-lite   # the real provider and model (LiteLLM format)
+      api_key: os.environ/GEMINI_API_KEY    # read from the environment, never written here
+      rpm: 10                               # requests per minute: the free tier is small
+      timeout: 60                           # seconds before we give up and fall back
+
+  # --- Fallback one. Used when the primary errors, rate limits or times out. ------------
+  - model_name: creditlens-fallback-1
+    litellm_params:
+      model: groq/openai/gpt-oss-20b        # a different provider, so a Gemini outage is survivable
+      api_key: os.environ/GROQ_API_KEY
+      rpm: 30                               # Groq's free tier is more generous per minute
+      timeout: 60
+
+  # --- Fallback two. Runs on the laptop, so it works with no internet at all. -----------
+  - model_name: creditlens-fallback-2
+    litellm_params:
+      model: ollama/llama3.2                # local model served by Ollama on port 11434
+      api_base: os.environ/OLLAMA_BASE_URL  # defaults to http://localhost:11434 when unset
+      rpm: 60                               # local: limited by the laptop, not by a quota
+
+  # --- The judge. Same model family, kept separate so judging and drafting do not ------
+  # --- compete for the same quota, and so the judge can be pinned while prompts change. -
+  - model_name: creditlens-judge
+    litellm_params:
+      model: gemini/gemini-3.5-flash-lite
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 10
+      timeout: 90
+
+router_settings:
+  routing_strategy: simple-shuffle          # one key per model here, so no load balancing needed
+  num_retries: 2                            # retry the same model twice before falling back
+  timeout: 60                               # overall per-request ceiling, in seconds
+  allowed_fails: 3                          # three failures and the model is cooled down
+  cooldown_time: 60                         # for this many seconds, then it is tried again
+  fallbacks:                                # the order the proxy walks when a model fails
+    - creditlens-primary: ["creditlens-fallback-1", "creditlens-fallback-2"]
+    - creditlens-fallback-1: ["creditlens-fallback-2"]
+  context_window_fallbacks:                 # a prompt too long for the primary goes here
+    - creditlens-primary: ["creditlens-fallback-1"]
+
+litellm_settings:
+  drop_params: true                         # silently drop params a provider does not support
+  set_verbose: false                        # keep the console readable during a live session
+  cache: true                               # the proxy caches too, on top of our DiskCache
+  cache_params:
+    type: local                             # in-memory; swap for redis when a room shares a proxy
+    ttl: 3600                               # one hour: long enough for a session, short enough to refresh
+
+general_settings:
+  # master_key gates the proxy itself. Set PROXY_MASTER_KEY before exposing the port.
+  master_key: os.environ/PROXY_MASTER_KEY
+  # Budgets are the cheapest incident prevention there is. The cost-spike drill in
+  # monitoring/incidents.py is what this guard is meant to catch.
+  max_budget: 5.0                           # US dollars, across the whole proxy
+  budget_duration: 30d                      # reset every 30 days

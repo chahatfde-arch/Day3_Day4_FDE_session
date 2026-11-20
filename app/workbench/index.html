@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Good Bank · Credit Review</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--ink:#1E1336;--muted:#6B6480;--line:#E4DFF0;--bg:#F6F4FB;--card:#FFFFFF;--brand:#2E1065;--accent:#6D28D9;--soft:#F1ECFC;
+--gold:#FFD447;--gold-soft:#FFF6D6;--ok:#15803D;--ok-soft:#DCFCE7;--bad:#B91C1C;--bad-soft:#FEE2E2;--warn:#92400E;--warn-soft:#FEF3C7}
+*{box-sizing:border-box}
+body{margin:0;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:12.5px}
+header{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--brand);color:#fff;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;letter-spacing:.2px}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--gold);color:var(--brand);display:grid;place-items:center;font-weight:700}
+.brand small{display:block;font-weight:400;font-size:12px;color:#C4B5FD;white-space:nowrap}
+header button{white-space:nowrap}
+.item .s{align-items:center}.item .s .badge{flex:none}
+.apphead>div:first-child{flex:1;min-width:0}
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.how div{background:var(--soft);border-radius:10px;padding:10px;font-size:12.5px}.how b{display:block;color:var(--brand);margin-bottom:4px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.chip{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12);color:#EDE9FE;white-space:nowrap}
+.chip b{color:#fff}
+.chip.live{background:#14532D;color:#DCFCE7}.chip.stand{background:#78350F;color:#FEF3C7}
+header select,header button{font:inherit;font-size:13px;border-radius:8px;border:0;padding:6px 10px}
+header button{background:rgba(255,255,255,.14);color:#fff;cursor:pointer}
+.banner{padding:10px 20px;background:var(--gold-soft);color:#5C4A00;border-bottom:1px solid #F5E3A1;display:none}
+main{display:grid;grid-template-columns:360px 1fr;gap:0;min-height:calc(100vh - 52px)}
+aside{border-right:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;max-height:calc(100vh - 52px);position:sticky;top:52px}
+.qhead{padding:14px 16px 8px}
+.qhead h2{margin:0 0 8px;font-size:15px}
+.qhead input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.tabs{display:flex;gap:4px;padding:6px 16px 10px;flex-wrap:wrap}
+.tab{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--muted)}
+.tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.qlist{overflow:auto;flex:1;padding:0 8px 16px}
+.item{padding:10px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent;margin:3px 0}
+.item:hover{background:var(--soft)}.item.sel{background:var(--soft);border-color:#C4B5FD}
+.item .t{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.item .s{color:var(--muted);font-size:12.5px;margin-top:2px;display:flex;justify-content:space-between;gap:8px}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.b-new{background:#EEF2F7;color:#475569}.b-wait{background:var(--gold-soft);color:#7A5B00}.b-signed{background:var(--ok-soft);color:var(--ok)}
+.b-story{background:#EDE9FE;color:var(--accent)}
+section.main{padding:20px 26px 60px;min-width:0}
+.empty{display:grid;place-items:center;height:60vh;color:var(--muted);text-align:center}
+.apphead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.apphead h1{margin:0;font-size:22px}
+.apphead .meta{color:var(--muted);margin-top:4px}
+.big{font-size:26px;font-weight:600}
+.btn{font:inherit;font-weight:600;border-radius:10px;padding:9px 16px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--brand)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:16px;min-width:0}
+.card h3{margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+.steps{display:flex;flex-direction:column;gap:2px}
+.st{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:6px 0}
+.dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);margin-top:1px}
+.st.done .dot{background:var(--ok);border-color:var(--ok)}.st.running .dot{border-color:var(--accent);border-top-color:transparent;animation:spin 0.9s linear infinite}
+.st.waiting .dot{background:var(--gold);border-color:#E6B800}.st .lbl{font-weight:600}.st .det{color:var(--muted);font-size:12.5px}
+.st .ms{color:var(--muted);font-size:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proposal{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ptag{font-size:13px;font-weight:600;padding:4px 12px;border-radius:999px}
+.p-approve{background:var(--ok-soft);color:var(--ok)}.p-counter{background:var(--gold-soft);color:#7A5B00}.p-decline{background:var(--bad-soft);color:var(--bad)}.p-refer{background:#E0E7FF;color:#3730A3}
+ul.clean{margin:6px 0 0;padding-left:18px}ul.clean li{margin:3px 0}
+.q{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;margin-top:6px}
+.cav{background:#FFF7ED;color:#9A3412;border-radius:10px;padding:6px 12px;margin-top:6px;font-size:13px}
+.etabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 12px;flex-wrap:wrap}
+.etab{padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-weight:500}
+.etab.on{color:var(--brand);border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid #F1EEF7;vertical-align:top}
+.pass{color:var(--ok);font-weight:600}.fail{color:var(--bad);font-weight:600}
+.src{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
+.src.live{background:var(--ok-soft);color:var(--ok)}.src.stand{background:var(--warn-soft);color:var(--warn)}
+.kv{display:grid;grid-template-columns:minmax(160px,auto) 1fr;gap:4px 14px;font-size:13px}.kv div:nth-child(odd){color:var(--muted)}
+.sign label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.sign input,.sign select,.sign textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;width:100%}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{flex:1;min-width:110px}
+.seg button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.condrow{display:grid;grid-template-columns:1fr 34px;gap:6px;margin-top:8px}
+.condrow input{grid-column:1/3}.condrow select{grid-column:1}
+.alert{border-radius:10px;padding:10px 14px;margin-top:12px}
+.a-bad{background:var(--bad-soft);color:var(--bad)}.a-ok{background:var(--ok-soft);color:var(--ok)}.a-info{background:var(--soft);color:var(--brand)}
+.audit li{margin:6px 0;list-style:none;padding-left:0}.audit{padding-left:0;margin:0}
+.audit .when{color:var(--muted);font-size:12px}.audit .who{font-weight:600}
+.hint{color:var(--muted);font-size:12.5px;margin-top:6px}
+.modal{position:fixed;inset:0;background:rgba(20,10,40,.45);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.modal .box{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:20px 22px;max-height:85vh;overflow:auto}
+.slack{border:1px solid #DDD;border-left:5px solid #4A154B;border-radius:8px;padding:12px 14px;margin-top:10px}
+.slack .fields{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:8px 0}.slack .k{font-weight:600}
+.sbtn{display:inline-block;border:1px solid #BBB;border-radius:6px;padding:4px 12px;margin:8px 6px 0 0;font-weight:600;font-size:13px}
+.sbtn.ok{background:#007A5A;color:#fff;border-color:#007A5A}
+@media (max-width:1000px){main{grid-template-columns:1fr}aside{position:static;max-height:none}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="mark">G</div><div>Good Bank<small>Credit Review · with the Underwriter Agent</small></div></div>
+  <div class="chips" id="chips"></div>
+  <button id="howBtn" title="What is behind this screen">How it works</button>
+  <button id="memBtn" title="What the agent has learned from the Head of Credit">Agent memory</button>
+  <select id="who" title="Demo sign-in: choose who you are"></select>
+</header>
+<div class="banner" id="banner"></div>
+<main>
+  <aside>
+    <div class="qhead"><h2 id="qtitle">My queue</h2><input id="search" placeholder="Search company or application"></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="qlist" id="qlist"></div>
+  </aside>
+  <section class="main" id="view"><div class="empty"><div><div class="big">Select an application</div><p>The Underwriter Agent prepares the review. A person decides.</p></div></div></section>
+</main>
+<div class="modal" id="modal"><div class="box" id="mbox"></div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cr = k => k == null ? "" : `₹${(k/10000).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})} Cr`;
+const STEPS = [["connect","Read the bank's systems","Oracle core banking and the SOAP repayment service"],
+  ["perceive","Observe the file","six sensors: application, conduct, financials, group, risk, checks"],
+  ["sanity","Check its own figures","accounting that must always be true"],
+  ["consult_leads","Read the memo agent's work","what the draft memo did not mention"],
+  ["weigh_options","Weigh the options","only the options the policy allows, scored"],
+  ["write_note","Write the review note","the model writes; code decides the proposal"],
+  ["underwriter_signs","Wait for the Head of Credit","the graph pauses here; nothing is decided"],
+  ["learn","Learn from the decision","conditions Amaira added, by trigger"]];
+let S = {user:null, users:[], apps:[], filter:"all", sel:null, data:null, etab:"checks", decision:null, steps:{}, es:null};
+
+async function api(path, opts={}){
+  const r = await fetch(path, {headers:{"Content-Type":"application/json"}, ...opts});
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw Object.assign(new Error(j.error || r.statusText), {status:r.status});
+  return j;
+}
+function me(){ return S.users.find(u => u.user_id === S.user) }
+
+async function boot(){
+  S.users = await api("/api/users");
+  $("#who").innerHTML = S.users.map(u => `<option value="${u.user_id}">${esc(u.full_name)} · ${u.role.replaceAll("_"," ")}${u.region!=="ALL"?" · "+u.region:""}</option>`).join("");
+  S.user = localStorage.getItem("gb_user") || "U05"; $("#who").value = S.user;
+  $("#who").onchange = e => { S.user = e.target.value; localStorage.setItem("gb_user", S.user); S.sel = null; S.data = null; loadQueue(); renderView(); };
+  $("#search").oninput = renderQueue; $("#memBtn").onclick = showMemory; $("#howBtn").onclick = showHow;
+  $("#modal").onclick = e => { if(e.target.id === "modal") $("#modal").style.display = "none"; };
+  pollStatus(); loadQueue(); systems();
+}
+
+async function pollStatus(){
+  const s = await api("/api/status").catch(() => null);
+  const b = $("#banner");
+  if(s && !s.ready && !s.error){ b.style.display="block"; b.innerHTML = `The Underwriter Agent is starting: the server is running notebook 04b's own code once (${s.loading_for_s} s so far, about a minute). You can browse the queue meanwhile.`; setTimeout(pollStatus, 2000); }
+  else if(s && s.error){ b.style.display="block"; b.innerHTML = "The agent could not start: " + esc(s.error); }
+  else { b.style.display="none"; if(S.sel) renderView(); }
+  S.status = s; renderChips();
+}
+async function systems(){ S.sys = await api("/api/systems").catch(() => null); renderChips(); setTimeout(systems, 30000); }
+function renderChips(){
+  const s = S.status || {}, y = S.sys || {};
+  const oracle = y.oracle === "oracle", soapLive = (y.containers||[]).some(c => c.name === "creditlens-soap");
+  $("#chips").innerHTML = [
+    `<span class="chip">Agent <b>${s.ready ? "ready" : s.error ? "error" : "starting"}</b></span>`,
+    `<span class="chip">Model <b>${esc(s.model || "")}</b></span>`,
+    `<span class="chip ${oracle?"live":"stand"}">Oracle <b>${oracle?"live":"stand-in"}</b></span>`,
+    `<span class="chip ${soapLive?"live":"stand"}">SOAP <b>${soapLive?"live":"mock"}</b> · breaker ${esc(y.soap_breaker || s.breaker || "")}</span>`,
+    `<span class="chip">Jira <b>practice</b> · Slack <b>dry run</b></span>`].join("");
+}
+
+async function loadQueue(){
+  const q = await api(`/api/queue?user_id=${S.user}`);
+  S.apps = q.applications;
+  const u = me();
+  $("#qtitle").textContent = u.region === "ALL" ? `All regions · ${S.apps.length} files` : `${u.region} region · ${S.apps.length} files`;
+  renderQueue();
+}
+const STATUS = {"new":["New","b-new"],"awaiting_signature":["Awaiting signature","b-wait"],"signed":["Signed","b-signed"]};
+function renderQueue(){
+  const counts = {all:S.apps.length}; S.apps.forEach(a => counts[a.status] = (counts[a.status]||0)+1);
+  $("#tabs").innerHTML = [["all","All"],["new","New"],["awaiting_signature","Awaiting signature"],["signed","Signed"]]
+    .map(([k,l]) => `<span class="tab ${S.filter===k?"on":""}" data-k="${k}">${l} ${counts[k]||0}</span>`).join("");
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => { S.filter = t.dataset.k; renderQueue(); });
+  const term = $("#search").value.toLowerCase();
+  const rows = S.apps.filter(a => (S.filter==="all" || a.status===S.filter) && (a.application_id+" "+a.legal_name).toLowerCase().includes(term));
+  $("#qlist").innerHTML = rows.map(a => {
+    const [st, cls] = STATUS[a.status];
+    return `<div class="item ${S.sel===a.application_id?"sel":""}" data-id="${a.application_id}">
+      <div class="t"><span>${esc(a.legal_name)}</span><span>${cr(a.requested_inr_000)}</span></div>
+      <div class="s"><span>${a.application_id} · ${esc(a.product)} · ${esc(a.region)} ${a.story?'<span class="badge b-story">story</span>':""}</span><span class="badge ${cls}">${st}</span></div></div>`;
+  }).join("") || `<p class="hint" style="padding:0 10px">Nothing here.</p>`;
+  document.querySelectorAll(".item").forEach(i => i.onclick = () => open(i.dataset.id));
+}
+
+async function open(id){
+  if(S.es){ S.es.close(); S.es = null; }
+  S.sel = id; S.steps = {}; S.err = null; S.ok = null; renderQueue();
+  try { S.data = await api(`/api/reviews/${id}?user_id=${S.user}`); } catch(e){ S.data = null; S.err = e.message; }
+  const r = S.data && S.data.review;
+  if(r){ STEPS.forEach(([k]) => S.steps[k] = {state: "done"}); S.steps.underwriter_signs = {state: r.status==="signed"?"done":"waiting"};
+         if(r.status!=="signed") delete S.steps.learn; S.decision = r.note.proposal; }
+  renderView();
+}
+
+function prepare(){
+  const id = S.sel; S.steps = {connect:{state:"running"}}; S.err = null; S.ok = null;
+  S.data.review = null;
+  const es = new EventSource(`/api/reviews/${id}/prepare?user_id=${S.user}`); S.es = es;
+  renderView();
+  const key = n => n.startsWith("core banking") ? "connect" : n;
+  es.addEventListener("step", ev => { const d = JSON.parse(ev.data); const k = key(d.step);
+    S.steps[k] = {state:d.state, detail:d.detail, ms:d.ms};
+    const i = STEPS.findIndex(s => s[0]===k); if(d.state==="done" && STEPS[i+1] && !S.steps[STEPS[i+1][0]]) S.steps[STEPS[i+1][0]] = {state:"running"};
+    renderTimeline(); });
+  es.addEventListener("ready", ev => { es.close(); S.es = null; S.data.review = JSON.parse(ev.data); S.decision = S.data.review.note.proposal; refreshAudit(); loadQueue(); renderView(); });
+  es.addEventListener("error", ev => { es.close(); S.es = null; try { S.err = JSON.parse(ev.data).error } catch { S.err = "The review stream stopped. Is the agent ready?" } renderView(); });
+}
+async function refreshAudit(){ const d = await api(`/api/reviews/${S.sel}?user_id=${S.user}`); S.data.audit = d.audit; const el = $("#audit"); if(el) el.innerHTML = auditHtml(); }
+
+function renderTimeline(){
+  const el = $("#timeline"); if(!el) return;
+  el.innerHTML = STEPS.map(([k,l,sub]) => { const s = S.steps[k] || {state:"pending"};
+    return `<div class="st ${s.state}"><div class="dot"></div><div><div class="lbl">${l}</div><div class="det">${esc(s.detail || sub)}</div></div><div class="ms">${s.ms!=null? s.ms+" ms" : s.state==="waiting"?"paused":""}</div></div>`; }).join("");
+}
+
+function renderView(){
+  const v = $("#view");
+  if(!S.sel){ v.innerHTML = `<div class="empty"><div><div class="big">Select an application</div><p>The Underwriter Agent prepares the review. A person decides.</p></div></div>`; return; }
+  if(!S.data){ v.innerHTML = `<div class="alert a-bad">${esc(S.err || "Loading...")}</div>`; return; }
+  const a = S.data.application, r = S.data.review, u = me(), ready = S.status && S.status.ready;
+  const running = !!S.es;
+  v.innerHTML = `
+  <div class="apphead"><div><h1>${esc(a.legal_name)} ${a.story?'<span class="badge b-story">story</span>':""}</h1>
+    <div class="meta">${a.application_id} · ${esc(a.product)} · ${esc(a.purpose||"")} · ${esc(a.sector||"")} · ${esc(a.region)} region · analyst ${esc(a.analyst_id)} · submitted ${esc(a.submitted_on)}</div></div>
+    <div style="text-align:right"><div class="big">${cr(a.requested_inr_000)}</div><div class="meta">requested · ${a.requested_inr_000.toLocaleString("en-IN")} INR thousand · ${a.tenure_months} months</div></div></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn primary" id="prep" ${(!ready||running||(r&&r.status==="signed"))?"disabled":""}>${r? "Re-run the agent" : "Ask the agent to prepare the review"}</button>
+    <button class="btn" id="tick" ${r?"":"disabled"}>File exception tickets in Jira</button>
+    <button class="btn" id="slk" ${r?"":"disabled"}>Notify the Head of Credit on Slack</button>
+  </div>
+  ${!ready ? `<p class="hint">The agent is still starting. It runs notebook 04b's own code once, about a minute.</p>` : ""}
+  ${S.err ? `<div class="alert a-bad">${esc(S.err)}</div>` : ""}${S.ok ? `<div class="alert a-ok">${S.ok}</div>` : ""}
+  <div class="grid2">
+    <div>
+      ${r ? proposalHtml(r, a) : `<div class="card"><h3>The agent's review</h3><p class="hint">Not prepared yet. Ask the agent: it reads the bank's systems, checks every rule, weighs the options and writes a note, then stops for the Head of Credit.</p></div>`}
+      ${r ? evidenceHtml(r) : ""}
+    </div>
+    <div>
+      <div class="card"><h3>What the agent did</h3><div class="steps" id="timeline"></div>${r?`<p class="hint">Prepared in ${r.seconds} s · prompt ${esc(r.prompt_version)} · ${esc(S.status?.model||"")}</p>`:""}</div>
+      ${r ? signHtml(r, u) : ""}
+      ${r && r.tickets && r.tickets.length ? `<div class="card"><h3>Jira tickets</h3>${r.tickets.map(t => `<div><span class="mono">${esc(t.key)}</span> · ${t.created?"created now":"already filed, nothing new"} · <span class="mono">${esc(t.idempotency_key)}</span></div>`).join("")}<p class="hint">Filed through the MCP server with an idempotency key, so a retry never files twice.</p></div>` : ""}
+      <div class="card"><h3>Audit trail</h3><ul class="audit" id="audit">${auditHtml()}</ul></div>
+    </div>
+  </div>`;
+  renderTimeline();
+  $("#prep").onclick = prepare;
+  $("#tick").onclick = fileTickets; $("#slk").onclick = notify;
+  bindEvidence(); bindSign();
+}
+
+function ptag(p){ const c = p==="approve"?"p-approve":p==="counter-offer"?"p-counter":p==="decline"?"p-decline":"p-refer"; return `<span class="ptag ${c}">${esc(p)}</span>`; }
+function proposalHtml(r, a){
+  const n = r.note, c = r.connected;
+  return `<div class="card"><h3>The agent's proposal</h3>
+    <div class="proposal">${ptag(n.proposal)} ${n.amount_inr_000?`<span class="big">${cr(n.amount_inr_000)}</span><span class="hint">${n.amount_inr_000.toLocaleString("en-IN")} INR thousand</span>`:""}
+      <span class="badge ${r.status==="signed"?"b-signed":"b-wait"}">${r.status==="signed"?"signed":"awaiting the Head of Credit"}</span></div>
+    <div style="margin-top:10px"><b>Reasons</b><ul class="clean">${n.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+    ${n.conditions && n.conditions.length ? `<div style="margin-top:8px"><b>Conditions it proposes</b> <span class="hint">(learned from Amaira's past decisions)</span><ul class="clean">${n.conditions.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+    ${n.questions_for_underwriter.length ? `<div style="margin-top:8px"><b>Questions for you</b>${n.questions_for_underwriter.map(q => `<div class="q">${esc(q)}</div>`).join("")}</div>` : ""}
+    ${c.caveats.length ? `<div style="margin-top:8px"><b>Where the facts came from</b>${c.caveats.map(x => `<div class="cav">${esc(x)}</div>`).join("")}</div>` : `<div class="alert a-ok">Every fact came from a live system.</div>`}
+    ${r.decision ? `<div class="alert a-ok"><b>Decided by ${esc(nameOf(r.decision.decided_by))}:</b> ${esc(r.decision.decision)} ${r.decision.amount_inr_000?cr(r.decision.amount_inr_000):""}${r.decision.conditions.length?" · conditions: "+r.decision.conditions.map(esc).join("; "):""}${r.critic&&r.critic.length?`<br><span class="hint">The agent learned: ${r.critic.map(esc).join("; ")}</span>`:""}</div>`:""}
+  </div>`;
+}
+function nameOf(id){ const u = S.users.find(x => x.user_id===id); return u ? u.full_name : id; }
+const src = s => `<span class="src ${["oracle","soap"].includes(s)?"live":"stand"}">${esc(s)}</span>`;
+function evidenceHtml(r){
+  const e = r.evidence, tabs = [["checks","Policy checks"],["fin","Financials"],["conduct","Banking conduct"],["group","Group"],["systems","Core banking & repayments"],["risk","Risk"]];
+  return `<div class="card"><h3>The evidence</h3><div class="etabs">${tabs.map(([k,l]) => `<span class="etab ${S.etab===k?"on":""}" data-k="${k}">${l}</span>`).join("")}</div><div id="ebody">${ebody(r)}</div></div>`;
+}
+function kv(o){ return `<div class="kv">${Object.entries(o||{}).filter(([k,v]) => typeof v!=="object").map(([k,v]) => `<div>${esc(k.replaceAll("_"," "))}</div><div>${esc(typeof v==="number"? v.toLocaleString("en-IN") : v)}</div>`).join("")}</div>`; }
+function ebody(r){
+  const e = r.evidence, c = r.connected;
+  if(S.etab==="checks") return `<table><tr><th>Rule</th><th>What it says</th><th>Measured</th><th>Limit</th><th>Result</th></tr>${e.checks.map(x => `<tr><td class="mono">${esc(x.rule_id)}</td><td>${esc(x.rule_text)}<div class="hint">${esc(x.evidence)}</div></td><td>${x.measured_value??""}</td><td>${x.threshold??""}</td><td class="${x.passed?"pass":"fail"}">${x.passed?"pass":"fail"}</td></tr>`).join("")}</table>`;
+  if(S.etab==="fin"){ const cols = ["fiscal_year","revenue","ebitda","pat","interest","total_debt"].filter(k => e.financials.length && k in e.financials[0]);
+    return `<table><tr>${cols.map(k => `<th>${k.replaceAll("_"," ")}</th>`).join("")}</tr>${e.financials.map(y => `<tr>${cols.map(k => `<td>${esc(typeof y[k]==="number"?y[k].toLocaleString("en-IN"):y[k])}</td>`).join("")}</tr>`).join("")}</table><p class="hint">INR thousand. Scanned statements are read offline by a simple reader; the agent's sanity check sends impossible figures to a person.</p>`; }
+  if(S.etab==="conduct") return kv(e.conduct);
+  if(S.etab==="group") return kv(e.group);
+  if(S.etab==="risk") return kv(e.risk);
+  return `<table><tr><th>Fact</th><th>Value</th><th>Source</th></tr>${Object.entries(c.facts).map(([k,f]) => `<tr><td>${esc(k.replaceAll("_"," "))}</td><td>${esc(f.value)}</td><td>${src(f.source)}</td></tr>`).join("")}</table>
+    <p class="hint">Oracle answered in ${c.oracle_s} s · SOAP in ${c.soap_s} s · circuit breaker ${esc(c.breaker)}. With Docker running (profile legacy) both answer live.</p>
+    <table><tr><th>Due</th><th>Amount</th><th>Paid</th><th>Days late</th></tr>${c.entries.map(x => `<tr><td>${x.due_date}</td><td>${x.amount}</td><td>${x.paid_on||"not paid"}</td><td>${x.days_late}</td></tr>`).join("")}</table>`;
+}
+function bindEvidence(){ document.querySelectorAll(".etab").forEach(t => t.onclick = () => { S.etab = t.dataset.k; document.querySelectorAll(".etab").forEach(x => x.classList.toggle("on", x===t)); $("#ebody").innerHTML = ebody(S.data.review); }); }
+
+function signHtml(r, u){
+  if(r.status==="signed") return "";
+  const head = u.role === "head_of_credit";
+  return `<div class="card sign"><h3>Your decision</h3>
+    ${head ? "" : `<div class="alert a-info">You are signed in as ${esc(u.full_name)} (${esc(u.role.replaceAll("_"," "))}). Only the Head of Credit may decide (policy 7.3). You can still try: the server checks.</div>`}
+    <label>Decision</label><div class="seg">${["approve","counter-offer","decline"].map(d => `<button class="btn ${S.decision===d?"on":""}" data-d="${d}">${d}</button>`).join("")}</div>
+    <label>Amount (INR thousand)</label><input id="amt" type="number" step="1000" value="${r.note.amount_inr_000 || (S.data.application.requested_inr_000)}">
+    <label>Conditions</label><div id="conds"></div><button class="btn" id="addc" style="margin-top:6px">Add a condition</button>
+    <label>Comment</label><textarea id="cmt" rows="2" placeholder="Why, for the file"></textarea>
+    <div class="row" style="margin-top:12px"><button class="btn gold" id="signbtn">Sign the decision</button></div>
+    ${S.err ? `<div class="alert a-bad">${esc(S.err)}</div>` : ""}
+    <p class="hint">Signing resumes the paused graph. The agent records the decision and learns any condition you add, for the trigger you choose. It never learns to approve.</p></div>`;
+}
+const TRIG = ["always","group over the limit","cash share at or above 15%"];
+function condRow(text="", trig="always"){ const d = document.createElement("div"); d.className = "condrow";
+  d.innerHTML = `<input placeholder="e.g. Personal guarantee from the managing director" value="${esc(text)}"><select title="Learn this condition for files where...">${TRIG.map(t => `<option ${t===trig?"selected":""} value="${t}">learn it for: ${t}</option>`).join("")}</select><button class="btn" title="Remove">×</button>`;
+  d.querySelector("button").onclick = () => d.remove(); $("#conds").appendChild(d); }
+function bindSign(){
+  if(!$("#signbtn")) return;
+  document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { S.decision = b.dataset.d; document.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x===b)); });
+  const learnedFor = S.data.review.condition_triggers || {};   // keep each learned condition's own trigger
+  (S.data.review.note.conditions || []).forEach(c => condRow(c, learnedFor[c] || "always"));
+  $("#addc").onclick = () => condRow();
+  $("#signbtn").onclick = async () => {
+    const conditions = [...document.querySelectorAll(".condrow")].map(d => ({text:d.querySelector("input").value, trigger:d.querySelector("select").value})).filter(c => c.text.trim());
+    try {
+      const res = await api(`/api/reviews/${S.sel}/sign`, {method:"POST", body:JSON.stringify({user_id:S.user, decision:S.decision, amount_inr_000:+$("#amt").value || 0, conditions, comment:$("#cmt").value})});
+      S.data.review = res; S.data.audit = res.audit; S.err = null; S.steps.underwriter_signs = {state:"done", detail:"signed by "+nameOf(S.user)}; S.steps.learn = {state:"done", detail: (res.critic&&res.critic.length)? res.critic.join("; ") : "nothing new to learn"};
+      S.ok = "Signed. The graph resumed from its checkpoint, recorded the decision and learned from it."; loadQueue(); renderView();
+    } catch(e){ S.err = "Refused: " + e.message; S.ok = null; await refreshAudit(); renderView(); }
+  };
+}
+function auditHtml(){ const ev = (S.data && S.data.audit) || []; if(!ev.length) return `<li class="hint">Nothing yet.</li>`;
+  return ev.map(e => `<li><span class="when">${esc(e.at.replace("T"," ").replace("+00:00"," UTC"))}</span><br><span class="who">${esc(e.actor==="underwriter-agent"?"Underwriter Agent":nameOf(e.actor))}</span> · ${esc(e.action.replaceAll("_"," "))}<div class="hint">${esc(e.detail)}</div></li>`).join(""); }
+
+async function fileTickets(){
+  try { const r = await api(`/api/reviews/${S.sel}/tickets`, {method:"POST", body:JSON.stringify({user_id:S.user})});
+    S.data.review.tickets = r.tickets || []; S.data.audit = r.audit || S.data.audit;
+    S.ok = r.note ? r.note : r.tickets.map(t => `${t.key}: ${t.created?"created":"already filed, nothing new"}`).join(" · "); S.err = null; renderView();
+  } catch(e){ S.err = e.message; renderView(); }
+}
+async function notify(){
+  try { const m = await api(`/api/reviews/${S.sel}/notify`, {method:"POST", body:JSON.stringify({user_id:S.user})}); refreshAudit();
+    $("#mbox").innerHTML = `<h3 style="margin-top:0">Slack · ${esc(m.channel)} <span class="badge b-new">dry run</span></h3>
+      <div class="slack"><b>${esc(m.title)}</b><div class="fields">${Object.entries(m.fields).map(([k,v]) => `<div><div class="k">${esc(k)}</div>${esc(v)}</div>`).join("")}</div>
+      <div>${m.reasons.map(esc).join("<br>")}</div>${m.buttons.map(b => `<span class="sbtn ${b==="Approve"?"ok":""}">${esc(b)}</span>`).join("")}</div>
+      <p class="hint">${esc(m.rule)}</p><button class="btn" onclick="document.getElementById('modal').style.display='none'">Close</button>`;
+    $("#modal").style.display = "flex";
+  } catch(e){ S.err = e.message; renderView(); }
+}
+function showHow(){
+  $("#mbox").innerHTML = `<h3 style="margin-top:0">How this works</h3>
+    <p>This screen is a real app around the agent you built today. Nothing on it is canned: every review is computed when you ask.</p>
+    <div class="how">
+      <div><b>1 · The agent</b>Notebook 04b's own code. The server runs the notebook's cells once at start-up and wires its seven nodes into one LangGraph.</div>
+      <div><b>2 · The bank's systems</b>Notebook 05b: Oracle core banking and the SOAP repayment service, live with Docker, labelled stand-ins without.</div>
+      <div><b>3 · The person</b>The graph pauses at the gate. The server checks your role before it resumes: only the Head of Credit decides.</div>
+      <div><b>4 · The record</b>Jira tickets through MCP with an idempotency key, a Slack preview, and an audit trail of every action.</div></div>
+    <p><b>Try this:</b> sign in as an analyst and open a file outside your region; prepare Rohan's review and try to sign it as an analyst; then sign as Amaira and add a condition, and open <i>Agent memory</i>; file the Jira tickets twice.</p>
+    <p class="hint">Code: <span class="mono">app/workbench/server.py</span> (the API) and <span class="mono">app/workbench/index.html</span> (this page). The agent: <span class="mono">notebooks/src/04b_underwriter_agent.py</span>. Start: <span class="mono">python app/workbench/server.py</span>.</p>
+    <button class="btn" onclick="document.getElementById('modal').style.display='none'">Close</button>`;
+  $("#modal").style.display = "flex";
+}
+async function showMemory(){
+  let mem; try { mem = await api("/api/memory"); } catch(e){ mem = null; }
+  $("#mbox").innerHTML = `<h3 style="margin-top:0">What the agent has learned</h3><p class="hint">Conditions the Head of Credit added, remembered by what triggered them. The agent proposes them next time; a person still reviews every one. It never learns thresholds or approvals.</p>
+    ${mem && Object.keys(mem).length ? Object.entries(mem).map(([t,cs]) => `<div class="card" style="margin-top:10px"><b>When: ${esc(t)}</b><ul class="clean">${Object.entries(cs).map(([c,n]) => `<li>${esc(c)} <span class="hint">(${n}×)</span></li>`).join("")}</ul></div>`).join("") : `<p>${mem? "Nothing yet." : "The agent is still starting."}</p>`}
+    <button class="btn" style="margin-top:12px" onclick="document.getElementById('modal').style.display='none'">Close</button>`;
+  $("#modal").style.display = "flex";
+}
+boot();
+</script>
+</body>
+</html>

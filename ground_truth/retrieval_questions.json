@@ -1,0 +1,213 @@
+{
+  "about": "Golden questions for the CreditLens AI retrieval eval (milestone 5). A question is answered correctly when the retriever returns a chunk whose heading path contains `expected_section`, or whose text contains `expected_rule_id`. Questions are written the way Priya, a credit analyst, would actually type them: no copied phrases from the manual, because a retriever that only works on copied phrases is not a retriever.",
+  "scoring": "recall@k and MRR, per retriever (vector, bm25, hybrid, reranked). See evals/retrieval_eval.py.",
+  "corpora": {
+    "good_bank_policy": "data/raw/policy/credit_policy_manual.md (fictional Good Bank manual, sections 1 to 9)",
+    "sba_sop": "data/real/sba_sop_50_10.md (real SBA SOP 50 10 rulebook, public domain)"
+  },
+  "questions": [
+    {
+      "id": "GB-01",
+      "question": "How long must a business have been trading before Good Bank will lend to it?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "2. Eligibility",
+      "expected_rule_id": "2.1"
+    },
+    {
+      "id": "GB-02",
+      "question": "Which industries will Good Bank not lend to at all?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "2. Eligibility",
+      "expected_rule_id": "2.2"
+    },
+    {
+      "id": "GB-03",
+      "question": "What is the minimum debt service coverage ratio and how is it calculated?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "3. Financial thresholds",
+      "expected_rule_id": "3.1"
+    },
+    {
+      "id": "GB-04",
+      "question": "How much leverage is allowed, measured as total borrowings against EBITDA?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "3. Financial thresholds",
+      "expected_rule_id": "3.2"
+    },
+    {
+      "id": "GB-05",
+      "question": "Is there a floor on the current ratio, and which liabilities go into it?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "3. Financial thresholds",
+      "expected_rule_id": "3.3"
+    },
+    {
+      "id": "GB-06",
+      "question": "How many bounced cheques in a year are acceptable on the operating account?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "4. Banking conduct",
+      "expected_rule_id": "4.1"
+    },
+    {
+      "id": "GB-07",
+      "question": "What share of money coming into the account may be cash deposits?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "4. Banking conduct",
+      "expected_rule_id": "4.2"
+    },
+    {
+      "id": "GB-08",
+      "question": "When do two companies count as part of the same group?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "5. Related parties and group exposure",
+      "expected_rule_id": "5.1"
+    },
+    {
+      "id": "GB-09",
+      "question": "What is the cap on total lending across all the companies in one group?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "5. Related parties and group exposure",
+      "expected_rule_id": "5.2"
+    },
+    {
+      "id": "GB-10",
+      "question": "Do I still have to list related companies in the memo when we are under the limit?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "5. Related parties and group exposure",
+      "expected_rule_id": "5.3"
+    },
+    {
+      "id": "GB-11",
+      "question": "What is the longest tenure we can offer on a working capital facility?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "6. Product rules",
+      "expected_rule_id": "6.1"
+    },
+    {
+      "id": "GB-12",
+      "question": "Does the managing director have to stand behind the loan personally?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "6. Product rules",
+      "expected_rule_id": "6.2"
+    },
+    {
+      "id": "GB-13",
+      "question": "What do I have to do before a file with a breach goes to the underwriter?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "7. Exceptions",
+      "expected_rule_id": "7.2"
+    },
+    {
+      "id": "GB-14",
+      "question": "Can an analyst sign off a waiver on a deal they are handling themselves?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "7. Exceptions",
+      "expected_rule_id": "7.3"
+    },
+    {
+      "id": "GB-15",
+      "question": "Am I allowed to paste a borrower's PAN and phone number into an AI tool?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "8. Data handling",
+      "expected_rule_id": "8.1"
+    },
+    {
+      "id": "GB-16",
+      "question": "Can I open a file that belongs to another region?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "8. Data handling",
+      "expected_rule_id": "8.2"
+    },
+    {
+      "id": "GB-17",
+      "question": "In what order should the sections of the credit memo appear?",
+      "expected_source": "good_bank_policy",
+      "expected_section": "9. Credit memo structure",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-01",
+      "question": "Is a petrol station operating under a fuel supply or dealer agreement treated as a franchise?",
+      "expected_source": "sba_sop",
+      "expected_section": "Franchises",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-02",
+      "question": "How does the lender work out whether the applicant counts as a small business, and at what date?",
+      "expected_source": "sba_sop",
+      "expected_section": "Small Under SBA Size Requirements",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-03",
+      "question": "Can a company whose main business is making loans to others get an SBA guarantee?",
+      "expected_source": "sba_sop",
+      "expected_section": "Types of Ineligible Businesses",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-04",
+      "question": "Does every owner and guarantor have to be a United States citizen or national?",
+      "expected_source": "sba_sop",
+      "expected_section": "Citizenship And Residency Requirements",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-05",
+      "question": "Must the lender screen the business and its owners against the sanctions lists?",
+      "expected_source": "sba_sop",
+      "expected_section": "OFAC Sanctions List",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-06",
+      "question": "If the borrower buys a building with the loan, how much of it may be rented out to other tenants?",
+      "expected_source": "sba_sop",
+      "expected_section": "Occupancy and Leasing Requirements",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-07",
+      "question": "What checks are needed when the project involves a building on the National Register of Historic Places?",
+      "expected_source": "sba_sop",
+      "expected_section": "Historic Properties",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-08",
+      "question": "How long can a 7(a) loan run for, and what decides the term?",
+      "expected_source": "sba_sop",
+      "expected_section": "Appendix 17: 7(a) Loan Maturity Requirements",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-09",
+      "question": "Can a 7(a) loan carry a floating rate, and who sets the ceiling on it?",
+      "expected_source": "sba_sop",
+      "expected_section": "Appendix 18: 7(a) Interest Rate Requirements",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-10",
+      "question": "What security does the lender have to take on a 7(a) loan?",
+      "expected_source": "sba_sop",
+      "expected_section": "Appendix 19: 7(a) Collateral Requirements",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-11",
+      "question": "Can SBA help finance a purchase by an employee stock ownership plan?",
+      "expected_source": "sba_sop",
+      "expected_section": "Loans to Employee Stock Ownership Plans (ESOPs)",
+      "expected_rule_id": ""
+    },
+    {
+      "id": "SBA-12",
+      "question": "What insurance does the lender have to put in place on the collateral?",
+      "expected_source": "sba_sop",
+      "expected_section": "Insurance Requirements",
+      "expected_rule_id": ""
+    }
+  ]
+}
