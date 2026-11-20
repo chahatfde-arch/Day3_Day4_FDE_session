@@ -12,7 +12,7 @@ Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an A
 | `notebooks/04b_underwriter_agent.ipynb` | **Day 3, build:** the Underwriter Agent from zero, through seven agent types, prompting, and a LangGraph with a human gate |
 | `notebooks/05_integrations.ipynb` | The bank's legacy systems (reference) |
 | `notebooks/05b_connect_the_agent.ipynb` | **Day 3, connect:** Oracle, SOAP, Jira through MCP and Slack, with timeouts, retries, a circuit breaker, labelled fallbacks and idempotent writes |
-| `app/workbench/` | **The Good Bank workbench:** a real web app around the agent ([README](app/workbench/README.md)) |
+| `app/workbench/` | **The Good Bank Credit Workbench:** the agent inside the credit team's web application ([README](app/workbench/README.md)) |
 | `infra/docker-compose.yml` | The bank's systems as Docker services (Oracle, the SOAP service, MLflow, ...) |
 | `src/creditlens/` | The project's code |
 | `docs/agents.md`, `docs/integrations.md` | Notes for Day 3 |
@@ -44,7 +44,7 @@ python -m creditlens.setup_check
 
 If PowerShell refuses to run `Activate.ps1`, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
 
-**Check it works:** `python app/workbench/server.py`, then open http://localhost:8090. After about a minute the header says *Agent ready*. Open *Rohan Packaging Pvt Ltd* and ask the agent to prepare the review: it proposes a counter-offer of ₹1.50 Cr.
+**Check it works:** `python app/workbench/server.py`, then open http://localhost:8090. After about a minute the top bar says *Review assistant online*. Open *A901, Rohan Packaging Pvt Ltd* and click *Run credit review*: the recommendation is a counter-offer of ₹1.50 Cr.
 
 **On Google Colab:** open a notebook from this repository and run its first cell. It clones the repository, installs what the notebook needs and generates the data. Docker does not run on Colab.
 

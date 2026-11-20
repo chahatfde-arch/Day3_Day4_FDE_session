@@ -3,136 +3,159 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Good Bank · Credit Review</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<title>Credit Workbench · Good Bank</title>
 <style>
-:root{--ink:#1E1336;--muted:#6B6480;--line:#E4DFF0;--bg:#F6F4FB;--card:#FFFFFF;--brand:#2E1065;--accent:#6D28D9;--soft:#F1ECFC;
---gold:#FFD447;--gold-soft:#FFF6D6;--ok:#15803D;--ok-soft:#DCFCE7;--bad:#B91C1C;--bad-soft:#FEE2E2;--warn:#92400E;--warn-soft:#FEF3C7}
+:root{--bar:#0E2841;--bg:#F4F6F9;--panel:#FFFFFF;--line:#D9E0E8;--line2:#ECF0F4;--text:#1B2532;--muted:#5D6B7B;
+--primary:#1A56B0;--primary-d:#134289;--ok:#1A7F44;--ok-bg:#E5F3EA;--warn:#8F5600;--warn-bg:#FFF3DB;--bad:#B3261E;--bad-bg:#FCE9E7;--info:#1A56B0;--info-bg:#E8F0FB}
 *{box-sizing:border-box}
-body{margin:0;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-.mono{font-family:'IBM Plex Mono',Consolas,monospace;font-size:12.5px}
-header{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--brand);color:#fff;position:sticky;top:0;z-index:5}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;letter-spacing:.2px}
-.mark{width:30px;height:30px;border-radius:8px;background:var(--gold);color:var(--brand);display:grid;place-items:center;font-weight:700}
-.brand small{display:block;font-weight:400;font-size:12px;color:#C4B5FD;white-space:nowrap}
-header button{white-space:nowrap}
-.item .s{align-items:center}.item .s .badge{flex:none}
-.apphead>div:first-child{flex:1;min-width:0}
-.how{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
-.how div{background:var(--soft);border-radius:10px;padding:10px;font-size:12.5px}.how b{display:block;color:var(--brand);margin-bottom:4px}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
-.chip{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12);color:#EDE9FE;white-space:nowrap}
-.chip b{color:#fff}
-.chip.live{background:#14532D;color:#DCFCE7}.chip.stand{background:#78350F;color:#FEF3C7}
-header select,header button{font:inherit;font-size:13px;border-radius:8px;border:0;padding:6px 10px}
-header button{background:rgba(255,255,255,.14);color:#fff;cursor:pointer}
-.banner{padding:10px 20px;background:var(--gold-soft);color:#5C4A00;border-bottom:1px solid #F5E3A1;display:none}
-main{display:grid;grid-template-columns:360px 1fr;gap:0;min-height:calc(100vh - 52px)}
-aside{border-right:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;max-height:calc(100vh - 52px);position:sticky;top:52px}
-.qhead{padding:14px 16px 8px}
-.qhead h2{margin:0 0 8px;font-size:15px}
-.qhead input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
-.tabs{display:flex;gap:4px;padding:6px 16px 10px;flex-wrap:wrap}
-.tab{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--muted)}
-.tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
-.qlist{overflow:auto;flex:1;padding:0 8px 16px}
-.item{padding:10px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent;margin:3px 0}
-.item:hover{background:var(--soft)}.item.sel{background:var(--soft);border-color:#C4B5FD}
-.item .t{display:flex;justify-content:space-between;gap:8px;font-weight:600}
-.item .s{color:var(--muted);font-size:12.5px;margin-top:2px;display:flex;justify-content:space-between;gap:8px}
-.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
-.b-new{background:#EEF2F7;color:#475569}.b-wait{background:var(--gold-soft);color:#7A5B00}.b-signed{background:var(--ok-soft);color:var(--ok)}
-.b-story{background:#EDE9FE;color:var(--accent)}
-section.main{padding:20px 26px 60px;min-width:0}
-.empty{display:grid;place-items:center;height:60vh;color:var(--muted);text-align:center}
-.apphead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.apphead h1{margin:0;font-size:22px}
-.apphead .meta{color:var(--muted);margin-top:4px}
-.big{font-size:26px;font-weight:600}
-.btn{font:inherit;font-weight:600;border-radius:10px;padding:9px 16px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
-.btn:hover{border-color:var(--accent)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--brand)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.row{display:flex;gap:16px;flex-wrap:wrap}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:16px;min-width:0}
-.card h3{margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:var(--accent)}
-.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
-.steps{display:flex;flex-direction:column;gap:2px}
-.st{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:6px 0}
-.dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);margin-top:1px}
-.st.done .dot{background:var(--ok);border-color:var(--ok)}.st.running .dot{border-color:var(--accent);border-top-color:transparent;animation:spin 0.9s linear infinite}
-.st.waiting .dot{background:var(--gold);border-color:#E6B800}.st .lbl{font-weight:600}.st .det{color:var(--muted);font-size:12.5px}
-.st .ms{color:var(--muted);font-size:12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.proposal{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.ptag{font-size:13px;font-weight:600;padding:4px 12px;border-radius:999px}
-.p-approve{background:var(--ok-soft);color:var(--ok)}.p-counter{background:var(--gold-soft);color:#7A5B00}.p-decline{background:var(--bad-soft);color:var(--bad)}.p-refer{background:#E0E7FF;color:#3730A3}
-ul.clean{margin:6px 0 0;padding-left:18px}ul.clean li{margin:3px 0}
-.q{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;margin-top:6px}
-.cav{background:#FFF7ED;color:#9A3412;border-radius:10px;padding:6px 12px;margin-top:6px;font-size:13px}
-.etabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 12px;flex-wrap:wrap}
-.etab{padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-weight:500}
-.etab.on{color:var(--brand);border-color:var(--accent)}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
-td{padding:7px 8px;border-bottom:1px solid #F1EEF7;vertical-align:top}
-.pass{color:var(--ok);font-weight:600}.fail{color:var(--bad);font-weight:600}
-.src{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
-.src.live{background:var(--ok-soft);color:var(--ok)}.src.stand{background:var(--warn-soft);color:var(--warn)}
-.kv{display:grid;grid-template-columns:minmax(160px,auto) 1fr;gap:4px 14px;font-size:13px}.kv div:nth-child(odd){color:var(--muted)}
-.sign label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.sign input,.sign select,.sign textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;width:100%}
-.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{flex:1;min-width:110px}
-.seg button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
-.condrow{display:grid;grid-template-columns:1fr 34px;gap:6px;margin-top:8px}
-.condrow input{grid-column:1/3}.condrow select{grid-column:1}
-.alert{border-radius:10px;padding:10px 14px;margin-top:12px}
-.a-bad{background:var(--bad-soft);color:var(--bad)}.a-ok{background:var(--ok-soft);color:var(--ok)}.a-info{background:var(--soft);color:var(--brand)}
-.audit li{margin:6px 0;list-style:none;padding-left:0}.audit{padding-left:0;margin:0}
-.audit .when{color:var(--muted);font-size:12px}.audit .who{font-weight:600}
-.hint{color:var(--muted);font-size:12.5px;margin-top:6px}
-.modal{position:fixed;inset:0;background:rgba(20,10,40,.45);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
-.modal .box{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:20px 22px;max-height:85vh;overflow:auto}
-.slack{border:1px solid #DDD;border-left:5px solid #4A154B;border-radius:8px;padding:12px 14px;margin-top:10px}
-.slack .fields{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:8px 0}.slack .k{font-weight:600}
-.sbtn{display:inline-block;border:1px solid #BBB;border-radius:6px;padding:4px 12px;margin:8px 6px 0 0;font-weight:600;font-size:13px}
-.sbtn.ok{background:#007A5A;color:#fff;border-color:#007A5A}
-@media (max-width:1000px){main{grid-template-columns:1fr}aside{position:static;max-height:none}.grid2{grid-template-columns:1fr}}
+html,body{margin:0;height:100%}
+body{font:13px/1.45 "Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--text);background:var(--bg)}
+a{color:var(--primary);text-decoration:none;cursor:pointer}a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}.mono{font-family:Consolas,"SFMono-Regular",Menlo,monospace;font-size:12px}
+.muted{color:var(--muted)}.small{font-size:12px}
+/* top bar */
+.top{height:48px;background:var(--bar);color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;position:sticky;top:0;z-index:10}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;white-space:nowrap}
+.logo .sq{width:26px;height:26px;border-radius:3px;background:#fff;color:var(--bar);display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:.5px}
+.logo .sep{width:1px;height:18px;background:#3A5677}.logo .app{font-weight:400;color:#D3DDEA}
+.env{font-size:10.5px;letter-spacing:.8px;border:1px solid #5B7699;color:#C9D6E6;padding:1px 6px;border-radius:2px}
+.gsearch{flex:1;max-width:420px;margin-left:12px}
+.gsearch input{width:100%;height:30px;border:0;border-radius:3px;padding:0 10px;background:#1C3B5E;color:#fff}
+.gsearch input::placeholder{color:#9FB3CB}
+.tright{margin-left:auto;display:flex;align-items:center;gap:14px}
+.astat{display:flex;align-items:center;gap:6px;font-size:12px;color:#C9D6E6;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:#9AA8B8}.dot.on{background:#3CC37A}.dot.wait{background:#F2B33D}.dot.off{background:#E5534B}
+.iconbtn{width:28px;height:28px;border-radius:50%;border:1px solid #3A5677;background:transparent;color:#D3DDEA;cursor:pointer}
+.user{display:flex;align-items:center;gap:8px}
+.avatar{width:28px;height:28px;border-radius:50%;background:#2F5B8C;display:grid;place-items:center;font-size:11px;font-weight:600}
+.user select{background:transparent;border:0;color:#fff;max-width:230px;cursor:pointer}.user select option{color:#000}
+/* layout */
+.shell{display:grid;grid-template-columns:208px 1fr;min-height:calc(100vh - 48px)}
+nav{background:#fff;border-right:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column}
+.nh{font-size:11px;letter-spacing:.6px;color:var(--muted);padding:10px 16px 4px;text-transform:uppercase}
+.ni{display:flex;justify-content:space-between;padding:7px 16px;color:var(--text);cursor:pointer;border-left:3px solid transparent}
+.ni:hover{background:#F2F5F9;text-decoration:none}.ni.on{background:#EBF1FA;border-left-color:var(--primary);font-weight:600}
+.ni .c{color:var(--muted);font-weight:400}
+.sysbox{margin-top:auto;padding:12px 16px;border-top:1px solid var(--line2);font-size:12px}
+.sysbox div{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
+main{padding:18px 24px 48px;min-width:0}
+/* page */
+.crumbs{font-size:12px;color:var(--muted);margin-bottom:6px}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.ph h1{font-size:20px;font-weight:600;margin:0;display:flex;align-items:center;gap:10px}
+.ph .sub{color:var(--muted);margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{height:30px;padding:0 12px;border-radius:3px;border:1px solid #B9C4D1;background:#fff;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#F2F5F9}.btn:disabled{opacity:.5;cursor:default;background:#fff}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:#fff}.btn.pri:hover{background:var(--primary-d)}.btn.pri:disabled{background:var(--primary)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px}
+.panel>.hd{padding:10px 14px;border-bottom:1px solid var(--line2);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.panel>.bd,.bd{padding:12px 14px}
+.toolbar{display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.toolbar input,.toolbar select{height:30px;border:1px solid #C6D0DC;border-radius:3px;padding:0 8px;background:#fff}
+.toolbar input{width:260px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);background:#F7F9FB;border-bottom:1px solid var(--line);padding:7px 10px;white-space:nowrap}
+th.s{cursor:pointer}th.s:hover{color:var(--text)}
+td{padding:7px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr.row{cursor:pointer}tr.row:hover td{background:#F5F8FC}
+td.r,th.r{text-align:right}
+.lz{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:2px;white-space:nowrap;border:1px solid transparent}
+.lz.new{background:#EEF1F5;color:#4A5868}.lz.pend{background:var(--warn-bg);color:var(--warn)}.lz.ok{background:var(--ok-bg);color:var(--ok)}
+.lz.info{background:var(--info-bg);color:var(--info)}.lz.bad{background:var(--bad-bg);color:var(--bad)}.lz.src{background:#fff;border-color:#C6D0DC;color:#4A5868;font-weight:500}
+.fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:4px;background:#fff;margin-bottom:12px}
+.fields div{padding:8px 14px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.fields div:nth-child(4n){border-right:0}.fields div:nth-last-child(-n+4){border-bottom:0}
+.fields label{display:block;font-size:11.5px;color:var(--muted)}.fields span{font-weight:600}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-radius:3px;margin-bottom:10px;border:1px solid}
+.notice.warn{background:var(--warn-bg);border-color:#F0D49A;color:#5E3B00}.notice.err{background:var(--bad-bg);border-color:#F2B8B3;color:#7A1A14}
+.notice.info{background:var(--info-bg);border-color:#BFD3F0;color:#163E7A}
+.notice b{white-space:nowrap}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 6px;overflow-x:auto}
+.tab{padding:9px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.tab:hover{color:var(--text)}.tab.on{color:var(--text);border-bottom-color:var(--primary);font-weight:600}
+.empty{padding:28px 14px;text-align:center;color:var(--muted)}
+.rec{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.rec .v{font-size:18px;font-weight:600}
+.sec{margin-top:14px}.sec h4{margin:0 0 4px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.sec ul{margin:0;padding-left:18px}.sec li{margin:2px 0}
+.att li{color:#5E3B00}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line2);border-radius:3px}
+.kpi{padding:8px 12px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.kpi:nth-child(3n){border-right:0}.kpi label{display:block;font-size:11.5px;color:var(--muted)}
+.kpi .v{font-size:15px;font-weight:600}.kpi .t{font-size:11.5px;color:var(--muted)}
+.kpi.fail .v{color:var(--bad)}
+.dl{display:grid;grid-template-columns:minmax(180px,40%) 1fr}.dl div{padding:6px 0;border-bottom:1px solid var(--line2)}.dl div:nth-child(odd){color:var(--muted)}
+.prog{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:8px}
+.ps{font-size:11.5px;color:var(--muted);border-top:3px solid var(--line);padding-top:5px}
+.ps.done{border-top-color:var(--ok);color:var(--text)}.ps.run{border-top-color:var(--primary);color:var(--text);font-weight:600}.ps.wait{border-top-color:#E0A126;color:var(--text)}
+.form label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
+.form input[type=number],.form input[type=text],.form select,.form textarea{width:100%;border:1px solid #C6D0DC;border-radius:3px;padding:6px 8px;background:#fff}
+.radios{display:flex;gap:14px;flex-wrap:wrap}.radios label{display:flex;gap:5px;align-items:center;color:var(--text);margin:0;font-size:13px}
+.cond{border:1px solid var(--line2);border-radius:3px;padding:6px;margin-top:6px;background:#FAFBFC}
+.cond .x{float:right;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.cond select{margin-top:4px}
+.authority{font-size:12px;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--line2)}
+.kv2{display:grid;grid-template-columns:110px 1fr;gap:4px 8px}.kv2 div:nth-child(odd){color:var(--muted)}
+.toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:30}
+.toast{background:#1E2A38;color:#fff;padding:9px 14px;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:380px;font-size:12.5px}
+.toast.err{background:#8E1F18}.toast.ok{background:#14532D}
+.modal{position:fixed;inset:0;background:rgba(14,40,65,.4);display:none;align-items:center;justify-content:center;z-index:40}
+.modal .box{background:#fff;border-radius:4px;width:560px;max-width:92vw;max-height:84vh;overflow:auto}
+.modal .box .hd{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600;display:flex;justify-content:space-between}
+.modal .box .bd{padding:14px 16px}
+.msg{border:1px solid var(--line);border-left:4px solid #611F69;border-radius:3px;padding:10px 12px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #BFD3F0;border-top-color:var(--primary);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.fields{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<header>
-  <div class="brand"><div class="mark">G</div><div>Good Bank<small>Credit Review · with the Underwriter Agent</small></div></div>
-  <div class="chips" id="chips"></div>
-  <button id="howBtn" title="What is behind this screen">How it works</button>
-  <button id="memBtn" title="What the agent has learned from the Head of Credit">Agent memory</button>
-  <select id="who" title="Demo sign-in: choose who you are"></select>
-</header>
-<div class="banner" id="banner"></div>
-<main>
-  <aside>
-    <div class="qhead"><h2 id="qtitle">My queue</h2><input id="search" placeholder="Search company or application"></div>
-    <div class="tabs" id="tabs"></div>
-    <div class="qlist" id="qlist"></div>
-  </aside>
-  <section class="main" id="view"><div class="empty"><div><div class="big">Select an application</div><p>The Underwriter Agent prepares the review. A person decides.</p></div></div></section>
-</main>
+<div class="top">
+  <div class="logo"><div class="sq">GB</div>Good Bank<span class="sep"></span><span class="app">Credit Workbench</span></div>
+  <span class="env">TRAINING</span>
+  <div class="gsearch"><input id="gsearch" placeholder="Search applications, borrowers"></div>
+  <div class="tright">
+    <span class="astat" id="astat"><span class="dot wait"></span>Review assistant starting</span>
+    <button class="iconbtn" id="help" title="About this workbench">?</button>
+    <div class="user"><div class="avatar" id="avatar">--</div><select id="who" title="Switch user (training environment)"></select></div>
+  </div>
+</div>
+<div class="shell">
+  <nav>
+    <div class="nh">Work</div>
+    <a class="ni" data-r="queue">Work queue <span class="c" id="nq"></span></a>
+    <div class="nh">Records</div>
+    <a class="ni" data-r="audit">Audit log</a>
+    <a class="ni" data-r="learned">Learned conditions</a>
+    <div class="sysbox" id="sysbox"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="toasts" id="toasts"></div>
 <div class="modal" id="modal"><div class="box" id="mbox"></div></div>
 
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const cr = k => k == null ? "" : `₹${(k/10000).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})} Cr`;
-const STEPS = [["connect","Read the bank's systems","Oracle core banking and the SOAP repayment service"],
-  ["perceive","Observe the file","six sensors: application, conduct, financials, group, risk, checks"],
-  ["sanity","Check its own figures","accounting that must always be true"],
-  ["consult_leads","Read the memo agent's work","what the draft memo did not mention"],
-  ["weigh_options","Weigh the options","only the options the policy allows, scored"],
-  ["write_note","Write the review note","the model writes; code decides the proposal"],
-  ["underwriter_signs","Wait for the Head of Credit","the graph pauses here; nothing is decided"],
-  ["learn","Learn from the decision","conditions Amaira added, by trigger"]];
-let S = {user:null, users:[], apps:[], filter:"all", sel:null, data:null, etab:"checks", decision:null, steps:{}, es:null};
+const cr = k => k == null || k === "" ? "—" : `₹${(k/10000).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})} Cr`;
+const inr = k => k == null ? "—" : Number(k).toLocaleString("en-IN");
+const when = iso => iso ? new Date(iso).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
+const day = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+const age = d => d ? Math.max(0, Math.floor((Date.now() - new Date(d)) / 86400000)) : "";
+const title = s => String(s||"").replaceAll("_"," ").replace(/^./, c => c.toUpperCase());
+const ROLE = {head_of_credit:"Head of Credit", analyst:"Credit Analyst", auditor:"Auditor"};
+const STEPS = [["connect","Core systems"],["perceive","Application data"],["sanity","Data validation"],["consult_leads","Memo cross-check"],
+               ["weigh_options","Options assessment"],["write_note","Recommendation"],["underwriter_signs","Awaiting approval"]];
+const STEPNAME = Object.fromEntries([...STEPS, ["learn","Decision recorded"]]);
+const ACTION = {review_prepared:"Credit review generated", signature_refused:"Decision refused: no approval authority", signed:"Decision submitted",
+  learned:"Conditions learned", ticket_filed:"Exception ticket raised", ticket_already_filed:"Exception ticket already exists",
+  slack_notified:"Approver notified", access_refused:"Access denied: outside region"};
+const KPI = {"3.1":["DSCR","x"],"3.2":["Borrowings / EBITDA","x"],"3.3":["Current ratio","x"],"4.1":["Cheque returns (12 m)",""],"4.2":["Cash deposit share","%"],"5.2":["Group exposure","INR '000"]};
+let S = {users:[], user:"U05", apps:[], status:null, sys:null, sort:{k:"submitted_on",d:-1}, q:"", fstatus:"all", fregion:"all",
+         rec:null, tab:"summary", run:null, es:null, form:null};
 
 async function api(path, opts={}){
   const r = await fetch(path, {headers:{"Content-Type":"application/json"}, ...opts});
@@ -140,231 +163,286 @@ async function api(path, opts={}){
   if(!r.ok) throw Object.assign(new Error(j.error || r.statusText), {status:r.status});
   return j;
 }
-function me(){ return S.users.find(u => u.user_id === S.user) }
+function toast(text, kind=""){ const box = $("#toasts"); while(box.children.length >= 3) box.firstChild.remove(); const t = document.createElement("div"); t.className = "toast " + kind; t.textContent = text; $("#toasts").appendChild(t); setTimeout(() => t.remove(), 5000); }
+const me = () => S.users.find(u => u.user_id === S.user) || {};
+const nameOf = id => id === "underwriter-agent" ? "Credit Review Assistant" : (S.users.find(u => u.user_id === id)?.full_name || id);
+function statusLz(a){
+  if(a.status === "awaiting_signature") return `<span class="lz pend">Pending approval</span>`;
+  if(a.status === "signed"){ const d = a.decision || a.decision_label; return d==="approve"?`<span class="lz ok">Approved</span>`:d==="decline"?`<span class="lz bad">Declined</span>`:`<span class="lz info">Counter-offer</span>`; }
+  return `<span class="lz new">New</span>`;
+}
+const recText = (p, amt) => !p ? "—" : p==="send to a person" ? "Refer to approver" : title(p) + (amt ? " · " + cr(amt) : "");
 
+/* ---------------------------------------------------------------- boot */
 async function boot(){
   S.users = await api("/api/users");
-  $("#who").innerHTML = S.users.map(u => `<option value="${u.user_id}">${esc(u.full_name)} · ${u.role.replaceAll("_"," ")}${u.region!=="ALL"?" · "+u.region:""}</option>`).join("");
-  S.user = localStorage.getItem("gb_user") || "U05"; $("#who").value = S.user;
-  $("#who").onchange = e => { S.user = e.target.value; localStorage.setItem("gb_user", S.user); S.sel = null; S.data = null; loadQueue(); renderView(); };
-  $("#search").oninput = renderQueue; $("#memBtn").onclick = showMemory; $("#howBtn").onclick = showHow;
-  $("#modal").onclick = e => { if(e.target.id === "modal") $("#modal").style.display = "none"; };
-  pollStatus(); loadQueue(); systems();
+  try { S.user = localStorage.getItem("gb_user") || "U05"; } catch {}
+  $("#who").innerHTML = S.users.map(u => `<option value="${u.user_id}">${esc(u.full_name)} · ${ROLE[u.role]||u.role}${u.region!=="ALL"?", "+u.region:""}</option>`).join("");
+  $("#who").value = S.user;
+  $("#who").onchange = e => { S.user = e.target.value; try{localStorage.setItem("gb_user", S.user)}catch{}; setAvatar(); location.hash = "#/queue"; loadQueue(); };
+  $("#gsearch").onkeydown = e => { if(e.key === "Enter"){ S.q = e.target.value; location.hash = "#/queue"; render(); } };
+  $("#help").onclick = help;
+  $("#modal").onclick = e => { if(e.target.id === "modal") closeModal(); };
+  document.querySelectorAll(".ni").forEach(n => n.onclick = () => location.hash = "#/" + n.dataset.r);
+  window.onhashchange = render;
+  setAvatar(); poll(); systems(); await loadQueue();
+  if(!location.hash) location.hash = "#/queue"; else render();
 }
-
-async function pollStatus(){
-  const s = await api("/api/status").catch(() => null);
-  const b = $("#banner");
-  if(s && !s.ready && !s.error){ b.style.display="block"; b.innerHTML = `The Underwriter Agent is starting: the server is running notebook 04b's own code once (${s.loading_for_s} s so far, about a minute). You can browse the queue meanwhile.`; setTimeout(pollStatus, 2000); }
-  else if(s && s.error){ b.style.display="block"; b.innerHTML = "The agent could not start: " + esc(s.error); }
-  else { b.style.display="none"; if(S.sel) renderView(); }
-  S.status = s; renderChips();
+function setAvatar(){ const u = me(); $("#avatar").textContent = (u.full_name||"--").split(" ").map(x => x[0]).join("").slice(0,2); }
+async function poll(){
+  S.status = await api("/api/status").catch(() => null); const s = S.status || {};
+  $("#astat").innerHTML = s.ready ? `<span class="dot on"></span>Review assistant online` : s.error ? `<span class="dot off"></span>Review assistant unavailable` : `<span class="dot wait"></span>Review assistant starting`;
+  if(!s.ready && !s.error) setTimeout(poll, 2000); else if(S.rec) renderRecord();
 }
-async function systems(){ S.sys = await api("/api/systems").catch(() => null); renderChips(); setTimeout(systems, 30000); }
-function renderChips(){
-  const s = S.status || {}, y = S.sys || {};
-  const oracle = y.oracle === "oracle", soapLive = (y.containers||[]).some(c => c.name === "creditlens-soap");
-  $("#chips").innerHTML = [
-    `<span class="chip">Agent <b>${s.ready ? "ready" : s.error ? "error" : "starting"}</b></span>`,
-    `<span class="chip">Model <b>${esc(s.model || "")}</b></span>`,
-    `<span class="chip ${oracle?"live":"stand"}">Oracle <b>${oracle?"live":"stand-in"}</b></span>`,
-    `<span class="chip ${soapLive?"live":"stand"}">SOAP <b>${soapLive?"live":"mock"}</b> · breaker ${esc(y.soap_breaker || s.breaker || "")}</span>`,
-    `<span class="chip">Jira <b>practice</b> · Slack <b>dry run</b></span>`].join("");
+async function systems(){
+  S.sys = await api("/api/systems").catch(() => null); const y = S.sys || {};
+  const oracle = y.oracle === "oracle", soap = (y.containers||[]).some(c => c.name === "creditlens-soap");
+  $("#sysbox").innerHTML = `<div class="muted" style="margin-bottom:4px">Connected systems</div>
+    <div>Core banking <span><span class="dot ${oracle?"on":"wait"}"></span> ${oracle?"Live":"Replica"}</span></div>
+    <div>Repayments <span><span class="dot ${soap?"on":"wait"}"></span> ${soap?"Live":"Estimated"}</span></div>
+    <div>Jira <span class="muted">Test project</span></div><div>Slack <span class="muted">Test mode</span></div>`;
+  setTimeout(systems, 30000);
 }
-
 async function loadQueue(){
-  const q = await api(`/api/queue?user_id=${S.user}`);
-  S.apps = q.applications;
-  const u = me();
-  $("#qtitle").textContent = u.region === "ALL" ? `All regions · ${S.apps.length} files` : `${u.region} region · ${S.apps.length} files`;
+  const q = await api(`/api/queue?user_id=${S.user}`); S.apps = q.applications;
+  $("#nq").textContent = S.apps.filter(a => a.status !== "signed").length; render();
+}
+
+/* ---------------------------------------------------------------- routing */
+function render(){
+  const [, page, id] = (location.hash || "#/queue").split("/");
+  document.querySelectorAll(".ni").forEach(n => n.classList.toggle("on", n.dataset.r === (page === "application" ? "queue" : page)));
+  if(page === "application" && id) return openRecord(id);
+  if(S.es){ S.es.close(); S.es = null; }
+  S.rec = null;
+  if(page === "audit") return renderAudit();
+  if(page === "learned") return renderLearned();
   renderQueue();
 }
-const STATUS = {"new":["New","b-new"],"awaiting_signature":["Awaiting signature","b-wait"],"signed":["Signed","b-signed"]};
+
+/* ---------------------------------------------------------------- queue */
 function renderQueue(){
-  const counts = {all:S.apps.length}; S.apps.forEach(a => counts[a.status] = (counts[a.status]||0)+1);
-  $("#tabs").innerHTML = [["all","All"],["new","New"],["awaiting_signature","Awaiting signature"],["signed","Signed"]]
-    .map(([k,l]) => `<span class="tab ${S.filter===k?"on":""}" data-k="${k}">${l} ${counts[k]||0}</span>`).join("");
-  document.querySelectorAll(".tab").forEach(t => t.onclick = () => { S.filter = t.dataset.k; renderQueue(); });
-  const term = $("#search").value.toLowerCase();
-  const rows = S.apps.filter(a => (S.filter==="all" || a.status===S.filter) && (a.application_id+" "+a.legal_name).toLowerCase().includes(term));
-  $("#qlist").innerHTML = rows.map(a => {
-    const [st, cls] = STATUS[a.status];
-    return `<div class="item ${S.sel===a.application_id?"sel":""}" data-id="${a.application_id}">
-      <div class="t"><span>${esc(a.legal_name)}</span><span>${cr(a.requested_inr_000)}</span></div>
-      <div class="s"><span>${a.application_id} · ${esc(a.product)} · ${esc(a.region)} ${a.story?'<span class="badge b-story">story</span>':""}</span><span class="badge ${cls}">${st}</span></div></div>`;
-  }).join("") || `<p class="hint" style="padding:0 10px">Nothing here.</p>`;
-  document.querySelectorAll(".item").forEach(i => i.onclick = () => open(i.dataset.id));
+  const u = me(), all = u.region === "ALL";
+  let rows = S.apps.filter(a => (S.fstatus==="all" || (S.fstatus==="open" ? a.status!=="signed" : a.status===S.fstatus))
+                             && (S.fregion==="all" || a.region===S.fregion)
+                             && (a.application_id+" "+a.legal_name+" "+a.product).toLowerCase().includes(S.q.toLowerCase()));
+  const k = S.sort.k; rows.sort((x,y) => (x[k] > y[k] ? 1 : x[k] < y[k] ? -1 : 0) * S.sort.d);
+  const th = (key, label, cls="") => `<th class="s ${cls}" data-k="${key}">${label}${S.sort.k===key?(S.sort.d>0?" ▲":" ▼"):""}</th>`;
+  $("#main").innerHTML = `
+    <div class="ph"><div><h1>Work queue</h1><div class="sub">Credit applications · ${all ? "all regions" : esc(u.region)+" region"}</div></div></div>
+    <div class="panel">
+      <div class="toolbar">
+        <input id="qs" placeholder="Filter by borrower, application or product" value="${esc(S.q)}">
+        <select id="fs"><option value="all">All statuses</option><option value="open">Open</option><option value="new">New</option><option value="awaiting_signature">Pending approval</option><option value="signed">Decided</option></select>
+        ${all ? `<select id="fr"><option value="all">All regions</option>${["North","South","East","West"].map(r => `<option>${r}</option>`).join("")}</select>` : ""}
+        <span class="muted" style="margin-left:auto">${rows.length} of ${S.apps.length}</span>
+      </div>
+      <table><thead><tr>${th("application_id","Application")}${th("legal_name","Borrower")}${th("product","Product")}${th("region","Region")}
+        ${th("requested_inr_000","Amount","r")}${th("submitted_on","Submitted")}<th class="r">Age (d)</th><th>Analyst</th>${th("status","Status")}<th>Recommendation</th></tr></thead>
+      <tbody>${rows.map(a => `<tr class="row" data-id="${a.application_id}"><td class="mono">${a.application_id}</td><td>${esc(a.legal_name)}</td><td>${esc(a.product)}</td>
+        <td>${esc(a.region)}</td><td class="r num">${cr(a.requested_inr_000)}</td><td class="num">${day(a.submitted_on)}</td><td class="r num">${age(a.submitted_on)}</td>
+        <td>${esc(nameOf(a.analyst_id))}</td><td>${statusLz(a)}</td><td>${recText(a.proposal, a.amount)}</td></tr>`).join("")
+        || `<tr><td colspan="10" class="empty">No applications match.</td></tr>`}</tbody></table>
+    </div>`;
+  $("#qs").oninput = e => { S.q = e.target.value; const p = e.target.selectionStart; renderQueue(); const i = $("#qs"); i.focus(); i.setSelectionRange(p,p); };
+  $("#fs").value = S.fstatus; $("#fs").onchange = e => { S.fstatus = e.target.value; renderQueue(); };
+  if($("#fr")){ $("#fr").value = S.fregion; $("#fr").onchange = e => { S.fregion = e.target.value; renderQueue(); }; }
+  document.querySelectorAll("th.s").forEach(h => h.onclick = () => { S.sort = {k:h.dataset.k, d: S.sort.k===h.dataset.k ? -S.sort.d : 1}; renderQueue(); });
+  document.querySelectorAll("tr.row").forEach(r => r.onclick = () => location.hash = "#/application/" + r.dataset.id);
 }
 
-async function open(id){
+/* ---------------------------------------------------------------- record */
+async function openRecord(id){
+  if(S.rec && S.rec.id === id && S.run) return renderRecord();
   if(S.es){ S.es.close(); S.es = null; }
-  S.sel = id; S.steps = {}; S.err = null; S.ok = null; renderQueue();
-  try { S.data = await api(`/api/reviews/${id}?user_id=${S.user}`); } catch(e){ S.data = null; S.err = e.message; }
-  const r = S.data && S.data.review;
-  if(r){ STEPS.forEach(([k]) => S.steps[k] = {state: "done"}); S.steps.underwriter_signs = {state: r.status==="signed"?"done":"waiting"};
-         if(r.status!=="signed") delete S.steps.learn; S.decision = r.note.proposal; }
-  renderView();
+  S.rec = {id, data:null, err:null}; S.run = null; S.form = null; S.tab = "summary";
+  try { S.rec.data = await api(`/api/reviews/${id}?user_id=${S.user}`); } catch(e){ S.rec.err = e.message; }
+  renderRecord();
 }
-
-function prepare(){
-  const id = S.sel; S.steps = {connect:{state:"running"}}; S.err = null; S.ok = null;
-  S.data.review = null;
-  const es = new EventSource(`/api/reviews/${id}/prepare?user_id=${S.user}`); S.es = es;
-  renderView();
-  const key = n => n.startsWith("core banking") ? "connect" : n;
-  es.addEventListener("step", ev => { const d = JSON.parse(ev.data); const k = key(d.step);
-    S.steps[k] = {state:d.state, detail:d.detail, ms:d.ms};
-    const i = STEPS.findIndex(s => s[0]===k); if(d.state==="done" && STEPS[i+1] && !S.steps[STEPS[i+1][0]]) S.steps[STEPS[i+1][0]] = {state:"running"};
-    renderTimeline(); });
-  es.addEventListener("ready", ev => { es.close(); S.es = null; S.data.review = JSON.parse(ev.data); S.decision = S.data.review.note.proposal; refreshAudit(); loadQueue(); renderView(); });
-  es.addEventListener("error", ev => { es.close(); S.es = null; try { S.err = JSON.parse(ev.data).error } catch { S.err = "The review stream stopped. Is the agent ready?" } renderView(); });
-}
-async function refreshAudit(){ const d = await api(`/api/reviews/${S.sel}?user_id=${S.user}`); S.data.audit = d.audit; const el = $("#audit"); if(el) el.innerHTML = auditHtml(); }
-
-function renderTimeline(){
-  const el = $("#timeline"); if(!el) return;
-  el.innerHTML = STEPS.map(([k,l,sub]) => { const s = S.steps[k] || {state:"pending"};
-    return `<div class="st ${s.state}"><div class="dot"></div><div><div class="lbl">${l}</div><div class="det">${esc(s.detail || sub)}</div></div><div class="ms">${s.ms!=null? s.ms+" ms" : s.state==="waiting"?"paused":""}</div></div>`; }).join("");
-}
-
-function renderView(){
-  const v = $("#view");
-  if(!S.sel){ v.innerHTML = `<div class="empty"><div><div class="big">Select an application</div><p>The Underwriter Agent prepares the review. A person decides.</p></div></div>`; return; }
-  if(!S.data){ v.innerHTML = `<div class="alert a-bad">${esc(S.err || "Loading...")}</div>`; return; }
-  const a = S.data.application, r = S.data.review, u = me(), ready = S.status && S.status.ready;
-  const running = !!S.es;
-  v.innerHTML = `
-  <div class="apphead"><div><h1>${esc(a.legal_name)} ${a.story?'<span class="badge b-story">story</span>':""}</h1>
-    <div class="meta">${a.application_id} · ${esc(a.product)} · ${esc(a.purpose||"")} · ${esc(a.sector||"")} · ${esc(a.region)} region · analyst ${esc(a.analyst_id)} · submitted ${esc(a.submitted_on)}</div></div>
-    <div style="text-align:right"><div class="big">${cr(a.requested_inr_000)}</div><div class="meta">requested · ${a.requested_inr_000.toLocaleString("en-IN")} INR thousand · ${a.tenure_months} months</div></div></div>
-  <div class="row" style="margin-top:14px">
-    <button class="btn primary" id="prep" ${(!ready||running||(r&&r.status==="signed"))?"disabled":""}>${r? "Re-run the agent" : "Ask the agent to prepare the review"}</button>
-    <button class="btn" id="tick" ${r?"":"disabled"}>File exception tickets in Jira</button>
-    <button class="btn" id="slk" ${r?"":"disabled"}>Notify the Head of Credit on Slack</button>
-  </div>
-  ${!ready ? `<p class="hint">The agent is still starting. It runs notebook 04b's own code once, about a minute.</p>` : ""}
-  ${S.err ? `<div class="alert a-bad">${esc(S.err)}</div>` : ""}${S.ok ? `<div class="alert a-ok">${S.ok}</div>` : ""}
-  <div class="grid2">
-    <div>
-      ${r ? proposalHtml(r, a) : `<div class="card"><h3>The agent's review</h3><p class="hint">Not prepared yet. Ask the agent: it reads the bank's systems, checks every rule, weighs the options and writes a note, then stops for the Head of Credit.</p></div>`}
-      ${r ? evidenceHtml(r) : ""}
+function renderRecord(){
+  const R = S.rec; if(!R) return;
+  if(R.err){ $("#main").innerHTML = `<div class="crumbs"><a href="#/queue">Work queue</a> › ${esc(R.id)}</div><div class="notice err"><b>Access denied.</b> ${esc(R.err)}</div>`; return; }
+  if(!R.data){ $("#main").innerHTML = `<div class="empty"><span class="spinner"></span> Loading</div>`; return; }
+  const a = R.data.application, r = R.data.review, ready = S.status && S.status.ready, running = !!S.es;
+  const st = r ? (r.status==="signed" ? {status:"signed", decision:r.decision?.decision} : {status:r.status}) : {status:"new"};
+  $("#main").innerHTML = `
+    <div class="crumbs"><a href="#/queue">Work queue</a> › ${esc(a.application_id)}</div>
+    <div class="ph"><div><h1>${esc(a.legal_name)} ${statusLz(st)}</h1><div class="sub">${esc(a.application_id)} · ${esc(a.product)} · ${esc(a.purpose||"")}</div></div>
+      <div class="actions">
+        <button class="btn pri" id="run" ${(!ready||running||(r&&r.status==="signed"))?"disabled":""} title="${ready?"":"The review assistant is starting"}">${r? "Re-run credit review" : "Run credit review"}</button>
+        <button class="btn" id="tix" ${r?"":"disabled"}>Raise exceptions</button>
+        <button class="btn" id="ntf" ${r?"":"disabled"}>Notify approver</button>
+      </div></div>
+    <div class="fields">
+      <div><label>Requested amount</label><span class="num">${cr(a.requested_inr_000)}</span> <span class="muted small">(INR ${inr(a.requested_inr_000)} '000)</span></div>
+      <div><label>Tenure</label><span>${a.tenure_months} months</span></div>
+      <div><label>Sector</label><span>${esc(a.sector||"—")}</span></div>
+      <div><label>Region</label><span>${esc(a.region)}</span></div>
+      <div><label>Analyst</label><span>${esc(nameOf(a.analyst_id))}</span></div>
+      <div><label>Submitted</label><span>${day(a.submitted_on)}</span> <span class="muted small">(${age(a.submitted_on)} days)</span></div>
+      <div><label>Borrower ID</label><span class="mono">${esc(a.company_id)}</span></div>
+      <div><label>Approval authority</label><span>Head of Credit</span></div>
     </div>
-    <div>
-      <div class="card"><h3>What the agent did</h3><div class="steps" id="timeline"></div>${r?`<p class="hint">Prepared in ${r.seconds} s · prompt ${esc(r.prompt_version)} · ${esc(S.status?.model||"")}</p>`:""}</div>
-      ${r ? signHtml(r, u) : ""}
-      ${r && r.tickets && r.tickets.length ? `<div class="card"><h3>Jira tickets</h3>${r.tickets.map(t => `<div><span class="mono">${esc(t.key)}</span> · ${t.created?"created now":"already filed, nothing new"} · <span class="mono">${esc(t.idempotency_key)}</span></div>`).join("")}<p class="hint">Filed through the MCP server with an idempotency key, so a retry never files twice.</p></div>` : ""}
-      <div class="card"><h3>Audit trail</h3><ul class="audit" id="audit">${auditHtml()}</ul></div>
-    </div>
-  </div>`;
-  renderTimeline();
-  $("#prep").onclick = prepare;
-  $("#tick").onclick = fileTickets; $("#slk").onclick = notify;
-  bindEvidence(); bindSign();
+    ${running ? progressHtml() : ""}
+    ${r && !running ? r.connected.caveats.map(c => `<div class="notice warn"><b>Data source</b><span>${esc(c)}</span></div>`).join("") : ""}
+    <div class="grid">
+      <div class="panel"><div class="tabs">${[["summary","Summary"],["checks","Policy checks"],["fin","Financials"],["conduct","Banking conduct"],["group","Group exposure"],["repay","Repayments"],["exc","Exceptions"],["act","Activity"]]
+        .map(([k,l]) => `<div class="tab ${S.tab===k?"on":""}" data-k="${k}">${l}</div>`).join("")}</div><div id="tabbody">${tabHtml()}</div></div>
+      <div>${decisionHtml()}</div>
+    </div>`;
+  $("#run").onclick = runReview; $("#tix").onclick = raise; $("#ntf").onclick = notify;
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => { S.tab = t.dataset.k; document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x===t)); $("#tabbody").innerHTML = tabHtml(); });
+  bindDecision();
+}
+function progressHtml(){
+  const cur = STEPS.findIndex(([k]) => !S.run.steps[k] || S.run.steps[k].state === "running");
+  return `<div class="panel" style="margin-bottom:12px"><div class="bd"><span class="spinner"></span> <b>Credit review in progress</b>
+    <span class="muted"> · ${cur >= 0 ? "step "+(cur+1)+" of "+STEPS.length+": "+STEPS[cur][1] : "finishing"}</span>
+    <div class="prog">${STEPS.map(([k,l]) => { const s = S.run.steps[k]; const c = !s ? "" : s.state==="done" ? "done" : s.state==="waiting" ? "wait" : "run";
+      return `<div class="ps ${c}">${l}${s && s.ms!=null ? `<div class="muted num">${s.ms>=1000?(s.ms/1000).toFixed(1)+" s":s.ms+" ms"}</div>` : ""}</div>`; }).join("")}</div></div></div>`;
 }
 
-function ptag(p){ const c = p==="approve"?"p-approve":p==="counter-offer"?"p-counter":p==="decline"?"p-decline":"p-refer"; return `<span class="ptag ${c}">${esc(p)}</span>`; }
-function proposalHtml(r, a){
-  const n = r.note, c = r.connected;
-  return `<div class="card"><h3>The agent's proposal</h3>
-    <div class="proposal">${ptag(n.proposal)} ${n.amount_inr_000?`<span class="big">${cr(n.amount_inr_000)}</span><span class="hint">${n.amount_inr_000.toLocaleString("en-IN")} INR thousand</span>`:""}
-      <span class="badge ${r.status==="signed"?"b-signed":"b-wait"}">${r.status==="signed"?"signed":"awaiting the Head of Credit"}</span></div>
-    <div style="margin-top:10px"><b>Reasons</b><ul class="clean">${n.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
-    ${n.conditions && n.conditions.length ? `<div style="margin-top:8px"><b>Conditions it proposes</b> <span class="hint">(learned from Amaira's past decisions)</span><ul class="clean">${n.conditions.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-    ${n.questions_for_underwriter.length ? `<div style="margin-top:8px"><b>Questions for you</b>${n.questions_for_underwriter.map(q => `<div class="q">${esc(q)}</div>`).join("")}</div>` : ""}
-    ${c.caveats.length ? `<div style="margin-top:8px"><b>Where the facts came from</b>${c.caveats.map(x => `<div class="cav">${esc(x)}</div>`).join("")}</div>` : `<div class="alert a-ok">Every fact came from a live system.</div>`}
-    ${r.decision ? `<div class="alert a-ok"><b>Decided by ${esc(nameOf(r.decision.decided_by))}:</b> ${esc(r.decision.decision)} ${r.decision.amount_inr_000?cr(r.decision.amount_inr_000):""}${r.decision.conditions.length?" · conditions: "+r.decision.conditions.map(esc).join("; "):""}${r.critic&&r.critic.length?`<br><span class="hint">The agent learned: ${r.critic.map(esc).join("; ")}</span>`:""}</div>`:""}
-  </div>`;
+function tabHtml(){
+  const r = S.rec.data.review;
+  if(!r) return S.es ? `<div class="empty"><span class="spinner"></span> Credit review in progress.</div>` : `<div class="empty">No credit review has been run for this application.<br><br>${S.status&&S.status.ready?`<button class="btn pri" onclick="runReview()">Run credit review</button>`:"The review assistant is starting."}</div>`;
+  const e = r.evidence, n = r.note, c = r.connected;
+  if(S.tab==="summary"){
+    const checks = Object.fromEntries(e.checks.map(x => [x.rule_id, x]));
+    const kpis = Object.entries(KPI).filter(([id]) => checks[id]).map(([id,[lab,u]]) => { const x = checks[id];
+      const v = x.measured_value==null ? "—" : u==="%" ? (x.measured_value*100).toFixed(1)+"%" : u==="x" ? Number(x.measured_value).toFixed(2)+"x" : inr(x.measured_value);
+      const t = x.threshold==null ? "" : u==="%" ? (x.threshold*100).toFixed(0)+"%" : u==="x" ? Number(x.threshold).toFixed(2)+"x" : inr(x.threshold);
+      return `<div class="kpi ${x.passed?"":"fail"}"><label>${lab}</label><div class="v num">${v}</div><div class="t">Limit ${t} · ${x.passed?"within policy":"breach, rule "+id}</div></div>`; }).join("");
+    return `<div class="bd">
+      <div class="rec"><span class="muted">Recommendation</span><span class="v">${recText(n.proposal, n.amount_inr_000)}</span></div>
+      <div class="muted small">Prepared by the Credit Review Assistant · ${when(r.generated_at)} · ${esc(r.prompt_version)}</div>
+      <div class="sec"><h4>Rationale</h4><ul>${n.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+      ${n.conditions&&n.conditions.length?`<div class="sec"><h4>Proposed conditions</h4><ul>${n.conditions.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+      ${n.questions_for_underwriter.length?`<div class="sec"><h4>For the approver's attention</h4><ul class="att">${n.questions_for_underwriter.map(x => `<li>${esc(x.replace("The memo does not mention: ","Not covered in the credit memo: "))}</li>`).join("")}</ul></div>`:""}
+      <div class="sec"><h4>Key ratios</h4><div class="kpis">${kpis}</div></div>
+      <div class="sec"><h4>Risk</h4><div class="dl"><div>Risk band</div><div>${esc(title(e.risk.risk_band))}</div><div>Probability of default</div><div class="num">${e.risk.probability_of_default!=null?(e.risk.probability_of_default*100).toFixed(2)+"%":"—"}</div><div>Model</div><div>${esc(e.risk.model_name||"—")} ${esc(e.risk.model_version?("v"+e.risk.model_version):"")}</div></div></div>
+    </div>`;
+  }
+  if(S.tab==="checks") return `<table><thead><tr><th>Rule</th><th>Requirement</th><th class="r">Actual</th><th class="r">Limit</th><th>Result</th></tr></thead><tbody>${e.checks.map(x => `<tr><td class="mono">${esc(x.rule_id)}</td><td>${esc(x.rule_text)}<div class="muted small">${esc(x.evidence)}</div></td><td class="r num">${x.measured_value??"—"}</td><td class="r num">${x.threshold??"—"}</td><td>${x.passed?`<span class="lz ok">Pass</span>`:`<span class="lz bad">Fail</span>`}</td></tr>`).join("")}</tbody></table>`;
+  if(S.tab==="fin"){ const cols = ["fiscal_year","revenue","ebitda","pat","interest","total_debt","current_assets","current_liabilities"].filter(k => e.financials.length && k in e.financials[0]);
+    const lab = {fiscal_year:"Year",revenue:"Revenue",ebitda:"EBITDA",pat:"PAT",interest:"Interest",total_debt:"Total debt",current_assets:"Current assets",current_liabilities:"Current liabilities"};
+    return `<table><thead><tr>${cols.map(k => `<th class="${k==="fiscal_year"?"":"r"}">${lab[k]}</th>`).join("")}</tr></thead><tbody>${e.financials.map(y => `<tr>${cols.map(k => `<td class="${k==="fiscal_year"?"":"r"} num">${k==="fiscal_year"?y[k]:inr(y[k])}</td>`).join("")}</tr>`).join("")}</tbody></table><div class="bd muted small">INR '000, from the filed financial statements.</div>`; }
+  if(S.tab==="conduct") return `<div class="bd">${dl(e.conduct)}</div>`;
+  if(S.tab==="group") return `<div class="bd">${dl(e.group)}</div>`;
+  if(S.tab==="repay"){ const src = s => `<span class="lz src">${s==="oracle"||s==="soap"?"Live":s==="mock"?"Estimated":"Replica"}</span>`;
+    return `<div class="bd"><div class="sec" style="margin-top:0"><h4>Core banking exposure ${src(c.facts.core_banking_product.source)}</h4><div class="dl">
+      <div>Outstanding (INR '000)</div><div class="num">${inr(c.facts.core_banking_outstanding_inr_000.value)}</div><div>Product</div><div>${esc(c.facts.core_banking_product.value||"—")}</div></div></div>
+      <div class="sec"><h4>Repayment history ${src(c.facts.repayment_instalments.source)}</h4><div class="muted small">${c.facts.repayment_instalments.value} instalments · ${c.facts.repayment_paid_late.value} paid late · worst delay ${c.facts.repayment_worst_delay_days.value} days</div></div></div>
+      <table><thead><tr><th>Due</th><th class="r">Amount (INR '000)</th><th>Paid</th><th class="r">Days late</th></tr></thead><tbody>${c.entries.map(x => `<tr><td class="num">${day(x.due_date)}</td><td class="r num">${inr(x.amount)}</td><td class="num">${x.paid_on?day(x.paid_on):"Not paid"}</td><td class="r num">${x.days_late||""}</td></tr>`).join("")}</tbody></table>`; }
+  if(S.tab==="exc"){ const failed = e.checks.filter(x => !x.passed);
+    return failed.length ? `<table><thead><tr><th>Rule</th><th>Exception</th><th>Ticket</th></tr></thead><tbody>${failed.map(x => { const t = (r.tickets||[]).find(t => (t.idempotency_key||"").endsWith(":"+x.rule_id));
+      return `<tr><td class="mono">${esc(x.rule_id)}</td><td>${esc(x.rule_text)}</td><td>${t?`<span class="mono">${esc(t.key)}</span> <span class="muted small">${t.created?"raised":"existing"}</span>`:`<span class="muted">Not raised</span>`}</td></tr>`; }).join("")}</tbody></table>` : `<div class="empty">No policy exceptions on this application.</div>`; }
+  if(S.tab==="act") return `<div class="bd"><div class="sec" style="margin-top:0"><h4>Processing log</h4></div></div><table><thead><tr><th>Step</th><th>Result</th><th class="r">Duration</th></tr></thead><tbody>${(r.log||[]).map(l => `<tr><td>${esc(STEPNAME[l.step.startsWith("core banking")?"connect":l.step]||l.step)}</td><td class="muted">${esc(l.detail||"")}</td><td class="r num">${l.ms!=null?(l.ms>=1000?(l.ms/1000).toFixed(1)+" s":l.ms+" ms"):""}</td></tr>`).join("")}</tbody></table>
+    <div class="bd"><div class="sec"><h4>Audit trail</h4></div></div>${auditTable(S.rec.data.audit, false)}`;
+  return "";
 }
-function nameOf(id){ const u = S.users.find(x => x.user_id===id); return u ? u.full_name : id; }
-const src = s => `<span class="src ${["oracle","soap"].includes(s)?"live":"stand"}">${esc(s)}</span>`;
-function evidenceHtml(r){
-  const e = r.evidence, tabs = [["checks","Policy checks"],["fin","Financials"],["conduct","Banking conduct"],["group","Group"],["systems","Core banking & repayments"],["risk","Risk"]];
-  return `<div class="card"><h3>The evidence</h3><div class="etabs">${tabs.map(([k,l]) => `<span class="etab ${S.etab===k?"on":""}" data-k="${k}">${l}</span>`).join("")}</div><div id="ebody">${ebody(r)}</div></div>`;
+function dl(o){ return `<div class="dl">${Object.entries(o||{}).filter(([k,v]) => typeof v !== "object").map(([k,v]) => `<div>${esc(title(k).replace(/ inr 000$/i," (INR '000)").replace(/ 12m$/," (12 m)"))}</div><div class="num">${esc(typeof v==="number" ? (Number.isInteger(v)?inr(v):v.toFixed(3)) : v===true?"Yes":v===false?"No":v)}</div>`).join("")}</div>`; }
+function auditTable(ev, withApp){
+  if(!ev || !ev.length) return `<div class="empty">No activity yet.</div>`;
+  return `<table><thead><tr><th>Time</th><th>User</th>${withApp?"<th>Application</th>":""}<th>Action</th><th>Details</th></tr></thead><tbody>${ev.map(x => `<tr><td class="num" style="white-space:nowrap">${when(x.at)}</td><td>${esc(nameOf(x.actor))}</td>${withApp?`<td><a href="#/application/${x.application_id}" class="mono">${x.application_id}</a></td>`:""}<td>${esc(ACTION[x.action]||title(x.action))}</td><td class="muted">${esc(String(x.detail||"").replace(/missing condition: /g,"condition added: ").replace(/amount: proposed/g,"amount changed: proposed"))}</td></tr>`).join("")}</tbody></table>`;
 }
-function kv(o){ return `<div class="kv">${Object.entries(o||{}).filter(([k,v]) => typeof v!=="object").map(([k,v]) => `<div>${esc(k.replaceAll("_"," "))}</div><div>${esc(typeof v==="number"? v.toLocaleString("en-IN") : v)}</div>`).join("")}</div>`; }
-function ebody(r){
-  const e = r.evidence, c = r.connected;
-  if(S.etab==="checks") return `<table><tr><th>Rule</th><th>What it says</th><th>Measured</th><th>Limit</th><th>Result</th></tr>${e.checks.map(x => `<tr><td class="mono">${esc(x.rule_id)}</td><td>${esc(x.rule_text)}<div class="hint">${esc(x.evidence)}</div></td><td>${x.measured_value??""}</td><td>${x.threshold??""}</td><td class="${x.passed?"pass":"fail"}">${x.passed?"pass":"fail"}</td></tr>`).join("")}</table>`;
-  if(S.etab==="fin"){ const cols = ["fiscal_year","revenue","ebitda","pat","interest","total_debt"].filter(k => e.financials.length && k in e.financials[0]);
-    return `<table><tr>${cols.map(k => `<th>${k.replaceAll("_"," ")}</th>`).join("")}</tr>${e.financials.map(y => `<tr>${cols.map(k => `<td>${esc(typeof y[k]==="number"?y[k].toLocaleString("en-IN"):y[k])}</td>`).join("")}</tr>`).join("")}</table><p class="hint">INR thousand. Scanned statements are read offline by a simple reader; the agent's sanity check sends impossible figures to a person.</p>`; }
-  if(S.etab==="conduct") return kv(e.conduct);
-  if(S.etab==="group") return kv(e.group);
-  if(S.etab==="risk") return kv(e.risk);
-  return `<table><tr><th>Fact</th><th>Value</th><th>Source</th></tr>${Object.entries(c.facts).map(([k,f]) => `<tr><td>${esc(k.replaceAll("_"," "))}</td><td>${esc(f.value)}</td><td>${src(f.source)}</td></tr>`).join("")}</table>
-    <p class="hint">Oracle answered in ${c.oracle_s} s · SOAP in ${c.soap_s} s · circuit breaker ${esc(c.breaker)}. With Docker running (profile legacy) both answer live.</p>
-    <table><tr><th>Due</th><th>Amount</th><th>Paid</th><th>Days late</th></tr>${c.entries.map(x => `<tr><td>${x.due_date}</td><td>${x.amount}</td><td>${x.paid_on||"not paid"}</td><td>${x.days_late}</td></tr>`).join("")}</table>`;
-}
-function bindEvidence(){ document.querySelectorAll(".etab").forEach(t => t.onclick = () => { S.etab = t.dataset.k; document.querySelectorAll(".etab").forEach(x => x.classList.toggle("on", x===t)); $("#ebody").innerHTML = ebody(S.data.review); }); }
 
-function signHtml(r, u){
-  if(r.status==="signed") return "";
+/* ---------------------------------------------------------------- decision panel */
+const TRIG = [["always","All applications"],["group over the limit","Group over its limit"],["cash share at or above 15%","Cash deposits at or above 15%"]];
+function decisionHtml(){
+  const r = S.rec.data.review, u = me();
+  if(!r) return `<div class="panel"><div class="hd">Credit decision</div><div class="bd muted">Available once a credit review has been generated.</div></div>`;
+  if(r.status === "signed"){ const d = r.decision;
+    return `<div class="panel"><div class="hd">Credit decision <span class="lz ok">Recorded</span></div><div class="bd"><div class="kv2">
+      <div>Decision</div><div><b>${esc(title(d.decision))}</b></div><div>Amount</div><div class="num">${cr(d.amount_inr_000)}</div>
+      <div>Conditions</div><div>${d.conditions.length?d.conditions.map(esc).join("<br>"):"None"}</div><div>Remarks</div><div>${esc(r.comment||"—")}</div>
+      <div>Decided by</div><div>${esc(nameOf(d.decided_by))}</div><div>Decided on</div><div class="num">${when(r.decided_at)}</div></div>
+      ${r.critic&&r.critic.length?`<div class="muted small" style="margin-top:10px;border-top:1px solid var(--line2);padding-top:8px">Added to learned conditions: ${r.critic.map(x => esc(x.replace("missing condition: ",""))).join("; ")}</div>`:""}</div></div>`; }
   const head = u.role === "head_of_credit";
-  return `<div class="card sign"><h3>Your decision</h3>
-    ${head ? "" : `<div class="alert a-info">You are signed in as ${esc(u.full_name)} (${esc(u.role.replaceAll("_"," "))}). Only the Head of Credit may decide (policy 7.3). You can still try: the server checks.</div>`}
-    <label>Decision</label><div class="seg">${["approve","counter-offer","decline"].map(d => `<button class="btn ${S.decision===d?"on":""}" data-d="${d}">${d}</button>`).join("")}</div>
-    <label>Amount (INR thousand)</label><input id="amt" type="number" step="1000" value="${r.note.amount_inr_000 || (S.data.application.requested_inr_000)}">
-    <label>Conditions</label><div id="conds"></div><button class="btn" id="addc" style="margin-top:6px">Add a condition</button>
-    <label>Comment</label><textarea id="cmt" rows="2" placeholder="Why, for the file"></textarea>
-    <div class="row" style="margin-top:12px"><button class="btn gold" id="signbtn">Sign the decision</button></div>
-    ${S.err ? `<div class="alert a-bad">${esc(S.err)}</div>` : ""}
-    <p class="hint">Signing resumes the paused graph. The agent records the decision and learns any condition you add, for the trigger you choose. It never learns to approve.</p></div>`;
+  if(!S.form) S.form = {decision: r.note.proposal==="approve"||r.note.proposal==="decline" ? r.note.proposal : "counter-offer",
+                        amount: r.note.amount_inr_000 || S.rec.data.application.requested_inr_000,
+                        conds: (r.note.conditions||[]).map(t => ({text:t, trig:(r.condition_triggers||{})[t]||"always"})), remarks:"", err:null};
+  const f = S.form;
+  return `<div class="panel form"><div class="hd">Credit decision <span class="lz pend">Pending</span></div><div class="bd">
+    <div class="authority">Approval authority: Head of Credit (credit policy 7.3).${head?"":`<br>Your role (${ROLE[u.role]||u.role}) does not carry approval authority.`}</div>
+    <label>Decision</label><div class="radios">${[["approve","Approve"],["counter-offer","Counter-offer"],["decline","Decline"]].map(([v,l]) => `<label><input type="radio" name="dec" value="${v}" ${f.decision===v?"checked":""}>${l}</label>`).join("")}</div>
+    <label>Sanctioned amount (INR '000)</label><input type="number" id="amt" step="500" value="${f.amount}"><div class="muted small" id="amtcr">${cr(f.amount)}</div>
+    <label>Conditions</label><div id="conds">${f.conds.map((c,i) => `<div class="cond"><button class="x" data-i="${i}" title="Remove">✕</button><input type="text" data-i="${i}" class="ct" value="${esc(c.text)}"><select data-i="${i}" class="cg">${TRIG.map(([v,l]) => `<option value="${v}" ${c.trig===v?"selected":""}>Applies to: ${l}</option>`).join("")}</select></div>`).join("")}</div>
+    <a id="addc" class="small">+ Add condition</a>
+    <label>Remarks</label><textarea id="rmk" rows="2">${esc(f.remarks)}</textarea>
+    <div style="margin-top:12px"><button class="btn pri" id="submit" style="width:100%">Submit decision</button></div>
+    ${f.err?`<div class="notice err" style="margin-top:10px;margin-bottom:0"><span>${esc(f.err)}</span></div>`:""}
+  </div></div>`;
 }
-const TRIG = ["always","group over the limit","cash share at or above 15%"];
-function condRow(text="", trig="always"){ const d = document.createElement("div"); d.className = "condrow";
-  d.innerHTML = `<input placeholder="e.g. Personal guarantee from the managing director" value="${esc(text)}"><select title="Learn this condition for files where...">${TRIG.map(t => `<option ${t===trig?"selected":""} value="${t}">learn it for: ${t}</option>`).join("")}</select><button class="btn" title="Remove">×</button>`;
-  d.querySelector("button").onclick = () => d.remove(); $("#conds").appendChild(d); }
-function bindSign(){
-  if(!$("#signbtn")) return;
-  document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { S.decision = b.dataset.d; document.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x===b)); });
-  const learnedFor = S.data.review.condition_triggers || {};   // keep each learned condition's own trigger
-  (S.data.review.note.conditions || []).forEach(c => condRow(c, learnedFor[c] || "always"));
-  $("#addc").onclick = () => condRow();
-  $("#signbtn").onclick = async () => {
-    const conditions = [...document.querySelectorAll(".condrow")].map(d => ({text:d.querySelector("input").value, trigger:d.querySelector("select").value})).filter(c => c.text.trim());
+function bindDecision(){
+  if(!$("#submit")) return; const f = S.form;
+  document.querySelectorAll("input[name=dec]").forEach(x => x.onchange = () => f.decision = x.value);
+  $("#amt").oninput = e => { f.amount = +e.target.value || 0; $("#amtcr").textContent = cr(f.amount); };
+  $("#rmk").oninput = e => f.remarks = e.target.value;
+  document.querySelectorAll(".ct").forEach(x => x.oninput = () => f.conds[+x.dataset.i].text = x.value);
+  document.querySelectorAll(".cg").forEach(x => x.onchange = () => f.conds[+x.dataset.i].trig = x.value);
+  document.querySelectorAll(".cond .x").forEach(x => x.onclick = () => { f.conds.splice(+x.dataset.i, 1); renderRecord(); });
+  $("#addc").onclick = () => { f.conds.push({text:"", trig:"always"}); renderRecord(); };
+  $("#submit").onclick = async () => {
     try {
-      const res = await api(`/api/reviews/${S.sel}/sign`, {method:"POST", body:JSON.stringify({user_id:S.user, decision:S.decision, amount_inr_000:+$("#amt").value || 0, conditions, comment:$("#cmt").value})});
-      S.data.review = res; S.data.audit = res.audit; S.err = null; S.steps.underwriter_signs = {state:"done", detail:"signed by "+nameOf(S.user)}; S.steps.learn = {state:"done", detail: (res.critic&&res.critic.length)? res.critic.join("; ") : "nothing new to learn"};
-      S.ok = "Signed. The graph resumed from its checkpoint, recorded the decision and learned from it."; loadQueue(); renderView();
-    } catch(e){ S.err = "Refused: " + e.message; S.ok = null; await refreshAudit(); renderView(); }
+      const res = await api(`/api/reviews/${S.rec.id}/sign`, {method:"POST", body:JSON.stringify({user_id:S.user, decision:f.decision, amount_inr_000:f.amount,
+        conditions:f.conds.filter(c => c.text.trim()).map(c => ({text:c.text, trigger:c.trig})), comment:f.remarks})});
+      S.rec.data.review = res; S.rec.data.audit = res.audit; S.form = null; toast("Decision submitted.", "ok"); loadQueue(); renderRecord();
+    } catch(e){ f.err = e.message; toast("Decision not submitted: " + e.message, "err"); await refreshRecord(); }
   };
 }
-function auditHtml(){ const ev = (S.data && S.data.audit) || []; if(!ev.length) return `<li class="hint">Nothing yet.</li>`;
-  return ev.map(e => `<li><span class="when">${esc(e.at.replace("T"," ").replace("+00:00"," UTC"))}</span><br><span class="who">${esc(e.actor==="underwriter-agent"?"Underwriter Agent":nameOf(e.actor))}</span> · ${esc(e.action.replaceAll("_"," "))}<div class="hint">${esc(e.detail)}</div></li>`).join(""); }
+async function refreshRecord(){ const d = await api(`/api/reviews/${S.rec.id}?user_id=${S.user}`); S.rec.data.audit = d.audit; renderRecord(); }
 
-async function fileTickets(){
-  try { const r = await api(`/api/reviews/${S.sel}/tickets`, {method:"POST", body:JSON.stringify({user_id:S.user})});
-    S.data.review.tickets = r.tickets || []; S.data.audit = r.audit || S.data.audit;
-    S.ok = r.note ? r.note : r.tickets.map(t => `${t.key}: ${t.created?"created":"already filed, nothing new"}`).join(" · "); S.err = null; renderView();
-  } catch(e){ S.err = e.message; renderView(); }
+/* ---------------------------------------------------------------- actions */
+function runReview(){
+  const id = S.rec.id; S.run = {steps:{connect:{state:"running"}}}; S.form = null;
+  const es = new EventSource(`/api/reviews/${id}/prepare?user_id=${S.user}`); S.es = es; renderRecord();
+  es.addEventListener("step", ev => { const d = JSON.parse(ev.data); const k = d.step.startsWith("core banking") ? "connect" : d.step;
+    S.run.steps[k] = {state:d.state, ms:d.ms}; const i = STEPS.findIndex(s => s[0]===k);
+    if(d.state==="done" && STEPS[i+1] && !S.run.steps[STEPS[i+1][0]]) S.run.steps[STEPS[i+1][0]] = {state:"running"};
+    if(S.rec && S.rec.id === id) { const p = document.querySelector(".prog"); if(p) p.parentElement.parentElement.outerHTML = progressHtml(); } });
+  es.addEventListener("ready", async ev => { es.close(); S.es = null; S.run = null;
+    if(S.rec && S.rec.id === id){ S.rec.data.review = JSON.parse(ev.data); await refreshRecord(); }
+    toast(`Credit review completed for ${id}.`, "ok"); loadQueue(); });
+  es.addEventListener("error", ev => { es.close(); S.es = null; S.run = null; let m = "The credit review could not be completed.";
+    try { m = JSON.parse(ev.data).error } catch {} toast(m, "err"); renderRecord(); });
+}
+async function raise(){
+  try { const r = await api(`/api/reviews/${S.rec.id}/tickets`, {method:"POST", body:JSON.stringify({user_id:S.user})});
+    if(!r.tickets.length){ toast("No policy exceptions to raise."); return; }
+    S.rec.data.review.tickets = r.tickets; S.rec.data.audit = r.audit;
+    toast(r.tickets.map(t => `${t.key} ${t.created ? "raised" : "already exists"}`).join(" · "), "ok"); S.tab = "exc"; renderRecord();
+  } catch(e){ toast(e.message, "err"); }
 }
 async function notify(){
-  try { const m = await api(`/api/reviews/${S.sel}/notify`, {method:"POST", body:JSON.stringify({user_id:S.user})}); refreshAudit();
-    $("#mbox").innerHTML = `<h3 style="margin-top:0">Slack · ${esc(m.channel)} <span class="badge b-new">dry run</span></h3>
-      <div class="slack"><b>${esc(m.title)}</b><div class="fields">${Object.entries(m.fields).map(([k,v]) => `<div><div class="k">${esc(k)}</div>${esc(v)}</div>`).join("")}</div>
-      <div>${m.reasons.map(esc).join("<br>")}</div>${m.buttons.map(b => `<span class="sbtn ${b==="Approve"?"ok":""}">${esc(b)}</span>`).join("")}</div>
-      <p class="hint">${esc(m.rule)}</p><button class="btn" onclick="document.getElementById('modal').style.display='none'">Close</button>`;
-    $("#modal").style.display = "flex";
-  } catch(e){ S.err = e.message; renderView(); }
+  try { const m = await api(`/api/reviews/${S.rec.id}/notify`, {method:"POST", body:JSON.stringify({user_id:S.user})}); refreshRecord();
+    toast(`Approver notified in ${m.channel} (test mode).`, "ok");
+    openModal(`Message sent to ${esc(m.channel)}`, `<div class="msg"><b>${esc(m.title)}</b><div class="kv2" style="margin:8px 0">${Object.entries(m.fields).map(([k,v]) => `<div>${esc(k)}</div><div>${esc(v)}</div>`).join("")}</div><div class="muted">${m.reasons.map(esc).join("<br>")}</div>
+      <div style="margin-top:8px">${m.buttons.map(b => `<button class="btn" disabled style="opacity:1">${esc(b)}</button>`).join(" ")}</div></div>
+      <p class="muted small">Test mode: the message is not posted to Slack. Decisions taken from Slack are accepted only from the account mapped to the Head of Credit.</p>`);
+  } catch(e){ toast(e.message, "err"); }
 }
-function showHow(){
-  $("#mbox").innerHTML = `<h3 style="margin-top:0">How this works</h3>
-    <p>This screen is a real app around the agent you built today. Nothing on it is canned: every review is computed when you ask.</p>
-    <div class="how">
-      <div><b>1 · The agent</b>Notebook 04b's own code. The server runs the notebook's cells once at start-up and wires its seven nodes into one LangGraph.</div>
-      <div><b>2 · The bank's systems</b>Notebook 05b: Oracle core banking and the SOAP repayment service, live with Docker, labelled stand-ins without.</div>
-      <div><b>3 · The person</b>The graph pauses at the gate. The server checks your role before it resumes: only the Head of Credit decides.</div>
-      <div><b>4 · The record</b>Jira tickets through MCP with an idempotency key, a Slack preview, and an audit trail of every action.</div></div>
-    <p><b>Try this:</b> sign in as an analyst and open a file outside your region; prepare Rohan's review and try to sign it as an analyst; then sign as Amaira and add a condition, and open <i>Agent memory</i>; file the Jira tickets twice.</p>
-    <p class="hint">Code: <span class="mono">app/workbench/server.py</span> (the API) and <span class="mono">app/workbench/index.html</span> (this page). The agent: <span class="mono">notebooks/src/04b_underwriter_agent.py</span>. Start: <span class="mono">python app/workbench/server.py</span>.</p>
-    <button class="btn" onclick="document.getElementById('modal').style.display='none'">Close</button>`;
-  $("#modal").style.display = "flex";
+
+/* ---------------------------------------------------------------- other pages */
+async function renderAudit(){
+  $("#main").innerHTML = `<div class="ph"><div><h1>Audit log</h1><div class="sub">Every action on applications you can access</div></div></div><div class="panel"><div class="empty"><span class="spinner"></span></div></div>`;
+  const ev = await api(`/api/audit?user_id=${S.user}`).catch(() => []);
+  $("#main").querySelector(".panel").innerHTML = auditTable(ev, true);
 }
-async function showMemory(){
-  let mem; try { mem = await api("/api/memory"); } catch(e){ mem = null; }
-  $("#mbox").innerHTML = `<h3 style="margin-top:0">What the agent has learned</h3><p class="hint">Conditions the Head of Credit added, remembered by what triggered them. The agent proposes them next time; a person still reviews every one. It never learns thresholds or approvals.</p>
-    ${mem && Object.keys(mem).length ? Object.entries(mem).map(([t,cs]) => `<div class="card" style="margin-top:10px"><b>When: ${esc(t)}</b><ul class="clean">${Object.entries(cs).map(([c,n]) => `<li>${esc(c)} <span class="hint">(${n}×)</span></li>`).join("")}</ul></div>`).join("") : `<p>${mem? "Nothing yet." : "The agent is still starting."}</p>`}
-    <button class="btn" style="margin-top:12px" onclick="document.getElementById('modal').style.display='none'">Close</button>`;
-  $("#modal").style.display = "flex";
+async function renderLearned(){
+  $("#main").innerHTML = `<div class="ph"><div><h1>Learned conditions</h1><div class="sub">Conditions added by the Head of Credit, proposed again on matching applications. Policy thresholds are never changed.</div></div></div><div class="panel"><div class="empty"><span class="spinner"></span></div></div>`;
+  let mem; try { mem = await api("/api/memory"); } catch { mem = null; }
+  const rows = mem ? Object.entries(mem).flatMap(([t, cs]) => Object.entries(cs).map(([c, n]) => ({t, c, n}))) : [];
+  const lab = Object.fromEntries(TRIG);
+  $("#main").querySelector(".panel").innerHTML = !mem ? `<div class="empty">The review assistant is starting.</div>` : rows.length ?
+    `<table><thead><tr><th>Applies to</th><th>Condition</th><th class="r">Times applied</th></tr></thead><tbody>${rows.map(x => `<tr><td>${esc(lab[x.t]||x.t)}</td><td>${esc(x.c)}</td><td class="r num">${x.n}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">No conditions learned yet.</div>`;
+}
+function openModal(t, body){ $("#mbox").innerHTML = `<div class="hd">${t}<a onclick="closeModal()">Close</a></div><div class="bd">${body}</div>`; $("#modal").style.display = "flex"; }
+function closeModal(){ $("#modal").style.display = "none"; }
+function help(){
+  openModal("About this workbench", `<p>The credit review is prepared by the Credit Review Assistant: the Underwriter Agent from notebook 04b, running on this server, with the bank-system connections from notebook 05b.</p>
+    <ul><li>The work queue shows only the applications in your region.</li><li>Only the Head of Credit can submit a decision; the server checks this before anything is recorded.</li>
+    <li>When core banking or the repayment service is unavailable, the review uses a replica or an estimate and says so.</li><li>Every action is written to the audit log.</li></ul>
+    <p class="muted small">Training environment: users can be switched from the menu at the top right. Code: app/workbench/server.py and index.html.</p>`);
 }
 boot();
 </script>

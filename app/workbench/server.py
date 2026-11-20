@@ -205,9 +205,9 @@ def connected_sensors(company_id: str) -> dict:
              "repayment_worst_delay_days": {"value": h.worst_delay_days, "source": h.source}}
     caveats = []
     if exp["source"] != "oracle":
-        caveats.append(f"Core banking figures came from the stand-in copy ({exp['source']}), not the live Oracle system.")
+        caveats.append("Core banking is unavailable. Exposure figures are from the replicated copy.")
     if h.source != "soap":
-        caveats.append("Repayment history came from the labelled mock, not the live SOAP service.")
+        caveats.append("The repayment service is unavailable. Repayment history is estimated.")
     return {"facts": facts, "caveats": caveats, "oracle_s": round(t1 - t0, 2), "soap_s": round(t2 - t1, 2),
             "breaker": SOAP.breaker.state, "entries": [e.model_dump() for e in h.entries]}
 
@@ -246,7 +246,8 @@ def queue(user_id: str):
         if visible(u, a):
             r = REVIEWS.get(a["application_id"], {})
             out.append(a | {"status": r.get("status", "new"), "proposal": (r.get("note") or {}).get("proposal"),
-                            "amount": (r.get("note") or {}).get("amount_inr_000")})
+                            "amount": (r.get("note") or {}).get("amount_inr_000"),
+                            "decision": (r.get("decision") or {}).get("decision")})
     return {"user": u, "applications": out}
 
 
@@ -271,12 +272,20 @@ def prepare(app_id: str, user_id: str):
 
     def run():
         t_all = time.time()
-        yield sse("step", {"step": "core banking (Oracle) and repayments (SOAP)", "state": "running"})
+        log: list[dict] = []          # the processing log, kept with the review
+
+        def step(data: dict) -> str:
+            if data.get("state") != "running":
+                log.append({k: data.get(k) for k in ("step", "state", "detail", "ms")})
+            return sse("step", data)
+
+        yield step({"step": "core banking (Oracle) and repayments (SOAP)", "state": "running"})
         conn = connected_sensors(a["company_id"])
-        yield sse("step", {"step": "core banking (Oracle) and repayments (SOAP)", "state": "done",
-                           "detail": f"Oracle {conn['facts']['core_banking_product']['source']} in {conn['oracle_s']} s · "
-                                     f"SOAP {conn['facts']['repayment_instalments']['source']} in {conn['soap_s']} s · "
-                                     f"breaker {conn['breaker']}"})
+        yield step({"step": "core banking (Oracle) and repayments (SOAP)", "state": "done",
+                    "ms": int((conn["oracle_s"] + conn["soap_s"]) * 1000),
+                    "detail": f"Oracle {conn['facts']['core_banking_product']['source']} in {conn['oracle_s']} s · "
+                              f"SOAP {conn['facts']['repayment_instalments']['source']} in {conn['soap_s']} s · "
+                              f"breaker {conn['breaker']}"})
         cfg = {"configurable": {"thread_id": f"workbench-{app_id}-{uuid.uuid4().hex[:8]}"}}
         t = time.time()
         note = None
@@ -285,11 +294,11 @@ def prepare(app_id: str, user_id: str):
                 for node, val in update.items():
                     if node == "__interrupt__":
                         note = val[0].value["note"]
-                        yield sse("step", {"step": "underwriter_signs", "state": "waiting",
-                                           "detail": "the graph is paused: waiting for the Head of Credit"})
+                        yield step({"step": "underwriter_signs", "state": "waiting",
+                                    "detail": "the graph is paused: waiting for the Head of Credit"})
                     else:
-                        yield sse("step", {"step": node, "state": "done", "ms": int((time.time() - t) * 1000),
-                                           "detail": describe(node, val)})
+                        yield step({"step": node, "state": "done", "ms": int((time.time() - t) * 1000),
+                                    "detail": describe(node, val)})
                         t = time.time()
         except Exception as err:  # noqa: BLE001
             yield sse("error", {"error": f"{type(err).__name__}: {err}"})
@@ -301,7 +310,8 @@ def prepare(app_id: str, user_id: str):
             REVIEWS[app_id] = {"status": "awaiting_signature", "cfg": cfg, "note": note, "evidence": evidence(m),
                                "connected": conn, "prepared_by": "Underwriter Agent", "requested_by": u["user_id"],
                                "prompt_version": ns["PROMPT_VERSION"], "seconds": round(time.time() - t_all, 1),
-                               "tickets": [], "decision": None, "critic": None,
+                               "tickets": [], "decision": None, "critic": None, "log": log,
+                               "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                                "condition_triggers": {c: learned_for.get(c, "always") for c in note.get("conditions") or []}}
         audit(app_id, "underwriter-agent", "review_prepared",
               f"proposal {note['proposal']} {note.get('amount_inr_000') or ''}; requested by {u['full_name']}")
@@ -356,7 +366,8 @@ def sign(app_id: str, d: Decision):
     from langgraph.types import Command
     final = STATE["graph"].invoke(Command(resume=decision), r["cfg"])   # the gate node checks the role again
     with LOCK:
-        r.update(status="signed", decision=decision, critic=final.get("critic"), path=final.get("path"), comment=d.comment)
+        r.update(status="signed", decision=decision, critic=final.get("critic"), path=final.get("path"), comment=d.comment,
+                 decided_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
     audit(app_id, u["user_id"], "signed",
           f"{d.decision} {d.amount_inr_000 or ''}; conditions: {'; '.join(decision['conditions']) or 'none'}"
           + (f"; comment: {d.comment}" if d.comment else ""))
