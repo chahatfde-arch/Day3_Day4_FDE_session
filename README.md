@@ -15,6 +15,7 @@ Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an A
 | `app/workbench/` | **The Good Bank Credit Workbench:** the agent inside the credit team's web application ([how to run it](#run-the-credit-workbench), [walkthrough with screenshots](docs/workbench_walkthrough.html)) |
 | `infra/docker-compose.yml` | The bank's systems as Docker services (Oracle, the SOAP service, MLflow, ...) |
 | `src/creditlens/` | The project's code |
+| `docs/session3_architecture.html` | **The big picture:** the pipeline, the architecture, the flow chart of one credit review, and why the agent is built this way (open in a browser) |
 | `docs/agents.md`, `docs/integrations.md` | Notes for Day 3 |
 
 Everything about Good Bank and its borrowers is synthetic. No API key is needed: everything runs offline by default.
