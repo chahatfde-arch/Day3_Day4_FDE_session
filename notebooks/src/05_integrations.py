@@ -44,7 +44,7 @@ os.environ.setdefault("LLM_OFFLINE", "1")
 # %% [markdown]
 # ## 1. Yesterday's bug
 # Open yesterday's memo trace. The group-exposure tool was called with a `company_id` instead of an
-# `application_id` in one of the pods' runs. Which schema should have caught it, and did it?
+# `application_id` in one of the earlier runs. Which schema should have caught it, and did it?
 
 # %% [markdown]
 # ## 2. Integration architecture (no code)

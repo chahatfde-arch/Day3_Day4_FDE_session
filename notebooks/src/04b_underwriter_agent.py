@@ -13,7 +13,7 @@
 # Amaira's signature**. And it learns from what she decides.
 #
 # **How this notebook works: zero to hero.** We build the agent seven times. Each version is one of the
-# seven agent types described on GeeksforGeeks ([Types of Agents in AI](https://www.geeksforgeeks.org/artificial-intelligence/types-of-agents-in-ai/)),
+# seven classic agent types,
 # and each one fixes the weakness of the last. Every version sits the same exam: the 30 Good Bank
 # applications, marked against the answer key. Along the way we learn to **write prompts** for it,
 # and at the end we assemble the whole thing with LangGraph and a human gate.
@@ -62,7 +62,7 @@ print("offline mode:", os.environ["LLM_OFFLINE"] == "1")
 
 # %% [markdown]
 # ## Stage 0. Before any code: PEAS and the architecture
-# GeeksforGeeks describes a task with **PEAS** ([PEAS description](https://www.geeksforgeeks.org/artificial-intelligence/peas-description-of-task-environment/)):
+# We describe a task with **PEAS**:
 # the **P**erformance measure (how we judge it), the **E**nvironment (the world it works in), the
 # **A**ctuators (what it can do) and the **S**ensors (what it can read). Writing PEAS first is the
 # forward deployed engineer's habit: if you cannot fill in this table with the client, you are not ready
@@ -83,7 +83,7 @@ for part, items in PEAS.items():
     print(f"{part:12s}", " · ".join(items))
 
 # %% [markdown]
-# **The architecture.** The GeeksforGeeks page [Agents in AI](https://www.geeksforgeeks.org/artificial-intelligence/agents-artificial-intelligence/)
+# **The architecture.** A standard agent architecture
 # splits an agent into four modules: **profiling** (its role), **memory** (what it knows), **planning**
 # (how it decides) and **action** (what it does). An LLM agent adds a persona, tools and a model. Here is
 # ours, drawn before we build it. The human gate sits outside the agent on purpose.
@@ -112,14 +112,14 @@ for a, b in [("Sensors (tools)", "Planning"), ("Profiling", "Planning"), ("Memor
     ax.annotate("", xy=centres[b], xytext=centres[a], arrowprops=dict(arrowstyle="->", color="#777777", lw=1.6,
                                                                     shrinkA=55, shrinkB=55))
 ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
-ax.set_title("The Underwriter Agent: four modules (after GeeksforGeeks), tools, and a human gate outside it",
+ax.set_title("The Underwriter Agent: four modules, tools, and a human gate outside it",
              loc="left", fontsize=12)
 plt.show()
 
 # %% [markdown]
 # ## Stage 1. A simple reflex agent: if-then rules on the form alone
 # A **simple reflex agent** acts on the current input only, with condition-action rules and no memory
-# (GeeksforGeeks' example: traffic lights on a timer). Our first agent reads the **application form**,
+# (a classic example: traffic lights on a timer). Our first agent reads the **application form**,
 # nothing else, and applies the rules a clerk could check from the form: years in business (2.1),
 # excluded sectors (2.2) and maximum tenure (6.1).
 #
@@ -185,7 +185,7 @@ exam(reflex_agent, "Stage 1, simple reflex")
 # %% [markdown]
 # ## Stage 2. A model-based agent: it remembers what it sensed
 # A **model-based reflex agent** keeps an internal model of the world, built from many readings
-# (GeeksforGeeks' example: a robot vacuum that maps the rooms it has cleaned). Our agent now calls five
+# (a classic example: a robot vacuum that maps the rooms it has cleaned). Our agent now calls five
 # sensors, keeps what they return in a **world model**, and checks every rule against it.
 
 # %%
@@ -281,7 +281,7 @@ exam(model_based_agent_v2, "Stage 2b, model-based with a sanity check")
 # %% [markdown]
 # ## Stage 3. A goal-based agent: a goal, and a plan to reach it
 # A **goal-based agent** chooses its next action by asking how far it is from a goal, and re-plans as it
-# learns more (GeeksforGeeks' example: delivery routing). Our goal: **a complete review**. That means
+# learns more (a classic example: delivery routing). Our goal: **a complete review**. That means
 # every fact is known, and *if a rule fails*, the agent has quoted the rule from the policy and prepared
 # an exception ticket. A clean file needs no quote; a file with an exception does. The path depends on
 # what the agent finds. That is the difference from a fixed workflow.
@@ -496,7 +496,7 @@ print(write_note(m20, {"proposal": "refer"}).model_dump_json(indent=1))
 # %% [markdown]
 # ## Stage 5. A utility-based agent: weigh the options
 # A **utility-based agent** scores possible outcomes and picks the best one under constraints
-# (GeeksforGeeks' example: portfolio management). An underwriter has more than yes or no: approve in full,
+# (a classic example: portfolio management). An underwriter has more than yes or no: approve in full,
 # **counter-offer** a smaller amount, or decline. The agent lists the options the policy allows, scores
 # each, and proposes the best.
 #
@@ -558,7 +558,7 @@ for app, m in STORY.items():
 
 # %% [markdown]
 # ## Stage 6. A learning agent: learn Amaira's conditions
-# A **learning agent** improves from feedback (GeeksforGeeks' example: a support chatbot that improves its
+# A **learning agent** improves from feedback (a classic example: a support chatbot that improves its
 # answers). Our feedback is Amaira's decisions. A **critic** compares each proposal with what she
 # decided; the **learning** step keeps the conditions she adds, linked to what triggered them; next time,
 # the agent proposes those conditions itself. The memory is a small file, so it survives a restart.
@@ -615,7 +615,7 @@ print("and for Rohan, a different file:", proposed_conditions(STORY["A901"]))
 
 # %% [markdown]
 # ## Stage 7. Multi-agent and hierarchical: review the memo agent's work
-# GeeksforGeeks describes **multi-agent systems** (several agents in one environment) and **hierarchical
+# Two more designs: **multi-agent systems** (several agents in one environment) and **hierarchical
 # agents** (higher levels set goals, lower levels act). Ours has three levels: Amaira sets policy and
 # decides; the Underwriter Agent reviews; the memo agent from notebook 04 and the tools do the groundwork.
 #

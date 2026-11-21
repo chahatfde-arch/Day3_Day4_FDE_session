@@ -1,6 +1,6 @@
 # CreditLens AI · Days 3 and 4 · TAN GLOBUS AI
 
-Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an AI agent on top of it, from zero, and connects it to the bank's systems.
+Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an AI agent on top of it, from zero, and connects it to the bank's systems. Day 4 takes it live: secure it, ship it, run it, keep it working, and test it against six hard cases.
 
 **The story.** Amaira Dey, Head of Credit at Good Bank, asks for help with her queue: *"Do the first four jobs for me. Never the fifth."* The Underwriter Agent gathers the evidence, checks every policy rule, weighs the options and writes a review note. Then it stops, because only Amaira signs.
 
@@ -12,11 +12,17 @@ Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an A
 | `notebooks/04b_underwriter_agent.ipynb` | **Day 3, build:** the Underwriter Agent from zero, through seven agent types, prompting, and a LangGraph with a human gate |
 | `notebooks/05_integrations.ipynb` | The bank's legacy systems (reference) |
 | `notebooks/05b_connect_the_agent.ipynb` | **Day 3, connect:** Oracle, SOAP, Jira through MCP and Slack, with timeouts, retries, a circuit breaker, labelled fallbacks and idempotent writes |
-| `app/workbench/` | **The Good Bank Credit Workbench:** the agent inside the credit team's web application ([how to run it](#run-the-credit-workbench), [walkthrough with screenshots](docs/workbench_walkthrough.html)) |
+| `notebooks/06_mlops_security_deploy.ipynb` | MLOps, security, Docker, continuous integration and the cloud (reference) |
+| `notebooks/06b_secure_and_ship.ipynb` | **Day 4, secure and ship:** a real risk model, its assumptions, fairness, access by region, masking, guardrails, secrets, the evaluation gate and the container |
+| `notebooks/07_evaluate_maintain.ipynb` | Evaluate and maintain: tracing, the eval court, gateway resilience, four incidents (reference) |
+| `notebooks/07b_run_and_maintain.ipynb` | **Day 4, run and maintain:** where the time goes, approver feedback, a calibrated judge, resilience, incidents, a policy change, rollback and the runbook |
+| `notebooks/08_story_scenarios.ipynb` | **Day 4, the hard cases:** six borrowers, one case at a time |
+| `app/workbench/` | **The Good Bank Credit Workbench:** the agent inside the credit team's web application, with its platform screens: statement screening, connected systems, model governance, release readiness and monitoring ([how to run it](#run-the-credit-workbench), [walkthrough with screenshots](docs/workbench_walkthrough.html), [the screens](app/workbench/README.md)) |
 | `infra/docker-compose.yml` | The bank's systems as Docker services (Oracle, the SOAP service, MLflow, ...) |
 | `src/creditlens/` | The project's code |
 | `docs/session3_architecture.html` | **The big picture:** the pipeline, the architecture, the flow chart of one credit review, and why the agent is built this way (open in a browser) |
 | `docs/agents.md`, `docs/integrations.md` | Notes for Day 3 |
+| `docs/mlops.md`, `docs/evaluate_and_maintain.md` | Notes for Day 4 |
 
 Everything about Good Bank and its borrowers is synthetic. No API key is needed: everything runs offline by default.
 

@@ -12,7 +12,6 @@ Every person and company is invented.
 """
 from __future__ import annotations
 
-from datetime import timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -56,7 +55,8 @@ def _meena(rng, out: Path):
     # one more bounce in the first lean month so the count crosses policy rule 4.1 (more than two)
     y, m = list(g._months())[8]
     rows.append((g._day(y, m, 20), "CHQ RTN MERU TRADERS INSUFFICIENT FUNDS", round(float(rng.uniform(0.8, 1.4)) * 100_000, 2), "Dr"))
-    rows.append((g._day(y, m, 21), "CHGS CHQ RTN", 590.0, "Dr")); bounces += 1
+    rows.append((g._day(y, m, 21), "CHGS CHQ RTN", 590.0, "Dr"))
+    bounces += 1
     # what she declared each month (as if from GST returns): same seasonal shape, a little noisier
     declared = pd.DataFrame([{"application_id": "A903", "month": mo, "declared_inr": round(v * float(rng.uniform(0.95, 1.05)), 2)} for mo, v in monthly])
     return rows, declared, bounces

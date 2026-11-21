@@ -74,9 +74,13 @@ def test_trajectory_flags_forbidden_and_repeated_calls():
     assert "forbidden_tools" in checks and "no_repeated_calls" in checks
 
 
-def test_gate_passes_by_default_and_fails_with_a_regressed_prompt():
+def test_gate_passes_by_default_and_fails_with_a_regressed_prompt(tmp_path, monkeypatch):
     pytest.importorskip("rank_bm25")
+    from evals import gate
     from evals.gate import run_gate
+
+    # the regressed run must not overwrite evals/results/gate.json, which the workbench's release screen reads
+    monkeypatch.setattr(gate, "RESULTS_PATH", tmp_path / "gate.json")
 
     ok = run_gate(limit=2, verbose=False)
     assert ok["passed"] is True, ok["failed"]

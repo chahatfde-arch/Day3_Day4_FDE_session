@@ -357,6 +357,9 @@ def train(experiment: str = "creditlens-risk", data_path: Optional[str] = None,
         "numeric_medians": {k: float(v) for k, v in medians.items()},
         "n_train": int(len(X_train)),
         "quick": quick,
+        # every candidate on the same held-out set, so the comparison survives without the MLflow server
+        "candidates": {k: {"algorithm": v["flavour"], "auc": round(v["auc"], 4), "pr_auc": round(v["pr_auc"], 4),
+                           "brier": round(v["brier"], 4)} for k, v in results.items()},
     }
     model_path = out_dir / "model.joblib"
     joblib.dump(champion, model_path)

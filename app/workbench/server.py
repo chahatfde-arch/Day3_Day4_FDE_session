@@ -28,7 +28,9 @@ from typing import Any, Optional
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 os.chdir(REPO)
-os.environ.setdefault("LLM_OFFLINE", "1")
+# Offline unless WORKBENCH_LIVE=1. VS Code loads .env (LLM_OFFLINE=0) into its terminals, and a live start-up
+# runs every model call in notebook 04b at LLM_RPM requests a minute: many minutes before a review can run.
+os.environ["LLM_OFFLINE"] = "0" if os.environ.get("WORKBENCH_LIVE") == "1" else "1"
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{(REPO / 'creditlens.db').as_posix()}")
 
 import pandas as pd  # noqa: E402
@@ -111,7 +113,8 @@ def perceive(app_id: str):
     return ns["perceive"](app_id)
 
 
-threading.Thread(target=load_agent, daemon=True).start()
+if os.environ.get("WORKBENCH_LOAD_AGENT", "1") == "1":   # tests set 0 and call load_agent() themselves
+    threading.Thread(target=load_agent, daemon=True).start()
 
 
 def need_agent():
@@ -446,6 +449,12 @@ def systems():
         except Exception:  # noqa: BLE001
             pass
     return out
+
+
+sys.path.insert(0, str(HERE))
+from platform_api import make_router  # noqa: E402  systems, models, release readiness, monitoring, screening
+
+app.include_router(make_router(globals()))
 
 
 @app.exception_handler(HTTPException)

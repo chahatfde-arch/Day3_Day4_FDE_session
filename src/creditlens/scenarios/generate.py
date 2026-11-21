@@ -24,7 +24,6 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from creditlens.config import Paths, Settings
@@ -177,7 +176,7 @@ def generate_scenarios(settings: Settings | None = None, out_dir: Path | None = 
                   for a, c, r in APPLICATIONS]).to_csv(out / "applications" / "applications.csv", index=False)
 
     key = {
-        "note": "Instructor answer key. Do not give this folder to pods before the reveal.",
+        "note": "Instructor answer key. Do not give this folder to participants before the reveal.",
         ROHAN_APP: {"company": "SC01", "group": ["SC01", "SC02", "SC03", "SC04"], "links": {
             "SC01-SC02": "shared director SD01", "SC01-SC03": "shared director SD01", "SC03-SC04": "shared address"},
             "group_exposure_inr_000": 155000, "breaches_rule_5_2": True, **rohan_truth},

@@ -109,7 +109,22 @@ td.r,th.r{text-align:right}
 .msg{border:1px solid var(--line);border-left:4px solid #611F69;border-radius:3px;padding:10px 12px}
 .spinner{display:inline-block;width:12px;height:12px;border:2px solid #BFD3F0;border-top-color:var(--primary);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
 @keyframes sp{to{transform:rotate(360deg)}}
-@media (max-width:1100px){.grid{grid-template-columns:1fr}.fields{grid-template-columns:repeat(2,1fr)}}
+.stack{display:flex;flex-direction:column;gap:14px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.bar{height:8px;background:var(--line2);border-radius:2px;overflow:hidden;min-width:80px}.bar i{display:block;height:100%;background:var(--primary)}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.pipe .st{flex:1;min-width:150px;border:1px solid var(--line);padding:8px 12px;background:#FAFBFC}
+.pipe .st+.st{border-left:0}.pipe .st b{display:block}.pipe .st span{font-size:12px;color:var(--muted)}
+.chain{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.chain .lk{border:1px solid var(--line);border-radius:3px;padding:4px 10px;background:#fff}
+.chain .ar{color:var(--muted)}
+details.out{margin-top:8px}details.out summary{cursor:pointer;color:var(--primary);font-size:12px}
+details.out pre{background:#0F1B2A;color:#DCE6F2;padding:10px;border-radius:3px;max-height:260px;overflow:auto;font-size:11.5px;white-space:pre-wrap}
+.jobline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.jobline select{height:30px;border:1px solid #C6D0DC;border-radius:3px;padding:0 8px;background:#fff}
+.ev{font-size:12px;color:var(--muted)}
+tr.sel td{background:#F5F8FC}
+@media (max-width:1100px){.two{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.fields{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -127,9 +142,15 @@ td.r,th.r{text-align:right}
   <nav>
     <div class="nh">Work</div>
     <a class="ni" data-r="queue">Work queue <span class="c" id="nq"></span></a>
+    <a class="ni" data-r="screening">Statement screening</a>
     <div class="nh">Records</div>
     <a class="ni" data-r="audit">Audit log</a>
     <a class="ni" data-r="learned">Learned conditions</a>
+    <div class="nh">Platform</div>
+    <a class="ni" data-r="systems">Connected systems</a>
+    <a class="ni" data-r="models">Model governance</a>
+    <a class="ni" data-r="release">Release readiness</a>
+    <a class="ni" data-r="monitoring">Monitoring</a>
     <div class="sysbox" id="sysbox"></div>
   </nav>
   <main id="main"></main>
@@ -152,7 +173,8 @@ const STEPS = [["connect","Core systems"],["perceive","Application data"],["sani
 const STEPNAME = Object.fromEntries([...STEPS, ["learn","Decision recorded"]]);
 const ACTION = {review_prepared:"Credit review generated", signature_refused:"Decision refused: no approval authority", signed:"Decision submitted",
   learned:"Conditions learned", ticket_filed:"Exception ticket raised", ticket_already_filed:"Exception ticket already exists",
-  slack_notified:"Approver notified", access_refused:"Access denied: outside region"};
+  slack_notified:"Approver notified", access_refused:"Access denied: outside region",
+  platform_job_started:"Platform job started", platform_action_refused:"Platform job refused: no authority"};
 const KPI = {"3.1":["DSCR","x"],"3.2":["Borrowings / EBITDA","x"],"3.3":["Current ratio","x"],"4.1":["Cheque returns (12 m)",""],"4.2":["Cash deposit share","%"],"5.2":["Group exposure","INR '000"]};
 let S = {users:[], user:"U05", apps:[], status:null, sys:null, sort:{k:"submitted_on",d:-1}, q:"", fstatus:"all", fregion:"all",
          rec:null, tab:"summary", run:null, es:null, form:null};
@@ -185,7 +207,7 @@ async function boot(){
   $("#modal").onclick = e => { if(e.target.id === "modal") closeModal(); };
   document.querySelectorAll(".ni").forEach(n => n.onclick = () => location.hash = "#/" + n.dataset.r);
   window.onhashchange = render;
-  setAvatar(); poll(); systems(); await loadQueue();
+  setAvatar(); poll(); systems(); pollJobs(); await loadQueue();
   if(!location.hash) location.hash = "#/queue"; else render();
 }
 function setAvatar(){ const u = me(); $("#avatar").textContent = (u.full_name||"--").split(" ").map(x => x[0]).join("").slice(0,2); }
@@ -217,6 +239,7 @@ function render(){
   S.rec = null;
   if(page === "audit") return renderAudit();
   if(page === "learned") return renderLearned();
+  if(PAGES[page]) return PAGES[page]();
   renderQueue();
 }
 
@@ -343,7 +366,7 @@ function tabHtml(){
 function dl(o){ return `<div class="dl">${Object.entries(o||{}).filter(([k,v]) => typeof v !== "object").map(([k,v]) => `<div>${esc(title(k).replace(/ inr 000$/i," (INR '000)").replace(/ 12m$/," (12 m)"))}</div><div class="num">${esc(typeof v==="number" ? (Number.isInteger(v)?inr(v):v.toFixed(3)) : v===true?"Yes":v===false?"No":v)}</div>`).join("")}</div>`; }
 function auditTable(ev, withApp){
   if(!ev || !ev.length) return `<div class="empty">No activity yet.</div>`;
-  return `<table><thead><tr><th>Time</th><th>User</th>${withApp?"<th>Application</th>":""}<th>Action</th><th>Details</th></tr></thead><tbody>${ev.map(x => `<tr><td class="num" style="white-space:nowrap">${when(x.at)}</td><td>${esc(nameOf(x.actor))}</td>${withApp?`<td><a href="#/application/${x.application_id}" class="mono">${x.application_id}</a></td>`:""}<td>${esc(ACTION[x.action]||title(x.action))}</td><td class="muted">${esc(String(x.detail||"").replace(/missing condition: /g,"condition added: ").replace(/amount: proposed/g,"amount changed: proposed"))}</td></tr>`).join("")}</tbody></table>`;
+  return `<table><thead><tr><th>Time</th><th>User</th>${withApp?"<th>Application</th>":""}<th>Action</th><th>Details</th></tr></thead><tbody>${ev.map(x => `<tr><td class="num" style="white-space:nowrap">${when(x.at)}</td><td>${esc(nameOf(x.actor))}</td>${withApp?`<td>${/^A\d/.test(x.application_id)?`<a href="#/application/${x.application_id}" class="mono">${x.application_id}</a>`:`<span class="muted">${esc(title(String(x.application_id).toLowerCase()))}</span>`}</td>`:""}<td>${esc(ACTION[x.action]||title(x.action))}</td><td class="muted">${esc(String(x.detail||"").replace(/missing condition: /g,"condition added: ").replace(/amount: proposed/g,"amount changed: proposed"))}</td></tr>`).join("")}</tbody></table>`;
 }
 
 /* ---------------------------------------------------------------- decision panel */
@@ -436,6 +459,229 @@ async function renderLearned(){
   $("#main").querySelector(".panel").innerHTML = !mem ? `<div class="empty">The review assistant is starting.</div>` : rows.length ?
     `<table><thead><tr><th>Applies to</th><th>Condition</th><th class="r">Times applied</th></tr></thead><tbody>${rows.map(x => `<tr><td>${esc(lab[x.t]||x.t)}</td><td>${esc(x.c)}</td><td class="r num">${x.n}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">No conditions learned yet.</div>`;
 }
+/* ---------------------------------------------------------------- platform pages */
+const PAGES = {systems: renderSystems, models: renderModels, release: renderRelease, monitoring: renderMonitoring, screening: renderScreening};
+const pct = (x, d=0) => x == null ? "—" : (x*100).toFixed(d) + "%";
+const ms = v => v == null ? "—" : v >= 1000 ? (v/1000).toFixed(1) + " s" : v + " ms";
+const MODE = m => ({Live:"ok", Local:"info", "Test project":"info", "Test mode":"info", Offline:"info", Replica:"pend", Estimated:"pend", "Not reachable":"bad"}[m] || "new");
+const canRun = () => ["head_of_credit","auditor"].includes(me().role);
+const runTitle = () => canRun() ? "" : "Platform jobs need the Head of Credit or the Auditor";
+function shell(h1, sub, actions=""){
+  $("#main").innerHTML = `<div class="ph"><div><h1>${h1}</h1><div class="sub">${sub}</div></div><div class="actions">${actions}</div></div><div id="pbody"><div class="panel"><div class="empty"><span class="spinner"></span> Loading</div></div></div>`;
+}
+const onPage = p => (location.hash || "").split("/")[1] === p;
+
+/* jobs: long checks run on the server as separate processes; the page polls while one runs */
+S.jobs = {};
+async function startJob(name, option="", label=""){
+  try { const j = await api(`/api/platform/jobs/${name}`, {method:"POST", body:JSON.stringify({user_id:S.user, option})});
+    S.jobs[j.key] = j; toast(`${j.label} started.`); pollJobs(); render();
+  } catch(e){ toast(e.message, "err"); }
+}
+let jobTimer = null;
+async function pollJobs(){
+  clearTimeout(jobTimer);
+  const before = JSON.stringify(Object.values(S.jobs).map(j => j.state));
+  S.jobs = await api(`/api/platform/jobs?user_id=${S.user}`).catch(() => S.jobs);
+  const running = Object.values(S.jobs).some(j => j.state === "running");
+  const after = JSON.stringify(Object.values(S.jobs).map(j => j.state));
+  if(before !== after){
+    Object.values(S.jobs).filter(j => j.state !== "running" && j.finished && !j._told).forEach(j => { j._told = true; toast(`${j.label}: ${j.state === "passed" ? "completed" : "finished with failures"}.`, j.state === "passed" ? "ok" : "err"); });
+    const page = (location.hash || "").split("/")[1]; if(PAGES[page]) PAGES[page](true);
+  } else document.querySelectorAll("[data-elapsed]").forEach(el => { const j = S.jobs[el.dataset.elapsed]; if(j && j.state === "running") el.textContent = `${j.seconds} s`; });
+  if(running) jobTimer = setTimeout(pollJobs, 2000);
+}
+function jobHtml(key){
+  const j = S.jobs[key]; if(!j) return "";
+  const state = j.state === "running" ? `<span class="spinner"></span> Running · <span data-elapsed="${key}">${j.seconds||0} s</span>`
+              : `<span class="lz ${j.state==="passed"?"ok":"bad"}">${j.state==="passed"?"Completed":"Failed"}</span> <span class="muted small">${when(j.finished)} · ${j.seconds} s</span>`;
+  return `<div class="ev" style="margin-top:8px">${state} · <span class="mono">${esc(j.cmd)}</span>${j.output?`<details class="out"><summary>Output</summary><pre>${esc(j.output)}</pre></details>`:""}</div>`;
+}
+const running = key => S.jobs[key] && S.jobs[key].state === "running";
+
+/* ------------------------------- Connected systems (05b) */
+async function renderSystems(keep, probe=false){
+  if(!keep) shell("Connected systems", "Bank systems, model services and the containers behind them",
+    `<button class="btn pri" id="probe">Test connections</button>`);
+  if($("#probe")) $("#probe").onclick = () => { $("#probe").disabled = true; renderSystems(true, true); };
+  let d; try { d = await api(`/api/platform/systems?user_id=${S.user}&probe=${probe}`); } catch(e){ $("#pbody").innerHTML = `<div class="notice err">${esc(e.message)}</div>`; return; }
+  if(!onPage("systems")) return;
+  if($("#probe")) $("#probe").disabled = false; if(probe) toast("Connections tested.", "ok");
+  const e = d.environment;
+  $("#pbody").innerHTML = `
+    <div class="fields">
+      <div><label>Environment</label><span>${esc(e.mode)}</span></div><div><label>Build</label><span class="mono">${esc(e.branch)} @ ${esc(e.commit)}</span></div>
+      <div><label>Model calls</label><span>${esc(e.model_calls)}</span></div><div><label>Server started</label><span>${when(e.started)}</span></div>
+    </div>
+    <div class="stack">
+    <div class="panel"><div class="hd">Integrations <span class="muted small" style="font-weight:400">${d.probed?"Tested":"Checked"} ${when(d.checked_at)}</span></div>
+      <table><thead><tr><th>System</th><th>Provider</th><th>Protocol</th><th>Endpoint</th><th>Resilience</th><th>Status</th><th class="r">Response</th></tr></thead><tbody>
+      ${d.systems.map(s => `<tr><td><b>${esc(s.name)}</b><div class="ev">${esc(s.detail)}</div></td><td>${esc(s.vendor)}</td><td>${esc(s.protocol)}</td>
+        <td class="mono" style="word-break:break-all">${esc(s.endpoint)}</td><td class="ev">${esc(s.pattern)}${s.breaker?`<br>circuit breaker: <b>${esc(s.breaker)}</b>`:""}</td>
+        <td><span class="lz ${MODE(s.mode)}">${esc(s.mode)}</span></td><td class="r num">${s.latency_ms!=null?ms(s.latency_ms):"—"}</td></tr>`).join("")}</tbody></table></div>
+    <div class="panel"><div class="hd">Docker services <span class="muted small" style="font-weight:400">${d.docker.available?"Docker running":"Docker not running"}</span></div>
+      <table><thead><tr><th>Container</th><th>Profile</th><th>Purpose</th><th>Used by</th><th>Image</th><th>Ports (laptop:container)</th><th>State</th></tr></thead><tbody>
+      ${d.docker.services.map(s => `<tr><td class="mono">${esc(s.name)}</td><td>${esc(s.profile)}</td><td>${esc(s.what)}</td><td class="ev">${esc(s.used_by)}</td><td class="mono small">${esc(s.image||"—")}</td>
+        <td class="mono">${esc(s.ports||"—")}</td><td><span class="lz ${s.state==="running"?"ok":s.state==="stopped"?"pend":"new"}">${esc(title(s.state))}${s.healthy?" · healthy":""}</span></td></tr>`).join("")}</tbody></table>
+      <div class="bd ev">Start the bank's systems: <span class="mono">${esc(d.docker.start)}</span> · one profile at a time on an 8 GB laptop.</div></div>
+    </div>`;
+}
+
+/* ------------------------------- Model governance (06b levels 1 to 3) */
+async function renderModels(keep){
+  if(!keep) shell("Model governance", "The risk model that scores every review: version, evidence, assumptions and fairness");
+  let d; try { d = await api(`/api/platform/models?user_id=${S.user}`); } catch(e){ $("#pbody").innerHTML = `<div class="notice err">${esc(e.message)}</div>`; return; }
+  if(!onPage("models")) return;
+  const c = d.champion, f = d.fairness || {}, gaps = f.largest_gaps || {};
+  const impFrom = (d.importance[c.run_name] || []).length ? c.run_name : Object.keys(d.importance)[0];
+  const imp = d.importance[impFrom] || [], maxImp = Math.max(...imp.map(x => Math.abs(x[1])), 1e-9);
+  $("#pbody").innerHTML = `
+    <div class="fields">
+      <div><label>Model</label><span class="mono">${esc(c.name)}</span></div><div><label>Champion version</label><span>v${esc(c.version)}</span> <span class="muted small">(${esc(c.run_name)})</span></div>
+      <div><label>Algorithm</label><span>${esc((c.algorithm||"").replace("sklearn.",""))}</span></div><div><label>Trained</label><span>${when(c.trained_at)}</span></div>
+      <div><label>Training rows</label><span class="num">${inr(c.n_train)}</span>${c.quick?` <span class="muted small">(quick run)</span>`:""}</div><div><label>Training data</label><span>${esc(d.training_data)}</span></div>
+      <div><label>Served from</label><span class="mono">${esc(d.served_from||"not trained")}</span></div><div><label>Features</label><span>${c.features.length}</span></div>
+    </div>
+    <div class="two">
+      <div class="panel"><div class="hd">Candidates · same held-out test set</div>
+        ${d.candidates.length ? `<table><thead><tr><th>Run</th><th>Algorithm</th><th class="r">AUC</th><th class="r">PR-AUC</th><th class="r">Brier</th><th>Outcome</th></tr></thead><tbody>
+        ${d.candidates.map(x => `<tr><td class="mono">${esc(x.run_name)}</td><td>${esc((x.algorithm||"").replace("sklearn.",""))}</td><td class="r num">${x.auc}</td><td class="r num">${x.pr_auc}</td><td class="r num">${x.brier}</td>
+          <td>${x.run_name===c.run_name?`<span class="lz ok">Champion</span>`:`<span class="lz new">Not promoted</span>`}</td></tr>`).join("")}</tbody></table>
+        <div class="bd ev">The higher AUC is promoted. Lower Brier means better-calibrated probabilities.</div>` : `<div class="empty">Retrain to record every candidate.</div>`}</div>
+      <div class="panel"><div class="hd">Top drivers · ${esc(impFrom||c.run_name)}${impFrom&&impFrom!==c.run_name?` <span class="muted small" style="font-weight:400">the champion records none</span>`:""}</div><table><tbody>
+        ${imp.map(([k,v]) => `<tr><td class="mono" style="width:40%">${esc(k)}</td><td><div class="bar"><i style="width:${(Math.abs(v)/maxImp*100).toFixed(0)}%"></i></div></td><td class="r num" style="width:70px">${Number(v).toFixed(3)}</td></tr>`).join("") || `<tr><td class="empty">No importances recorded.</td></tr>`}</tbody></table></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><div class="hd">Fairness by segment <span class="muted small" style="font-weight:400">high-risk threshold ${f.threshold ?? "—"}</span></div>
+      ${Object.entries(gaps).map(([seg,g]) => `<div class="notice warn" style="margin:10px 14px 0"><b>${esc(seg)}</b><span>Flagged high risk: ${esc(g.highest)} ${pct(g.highest_share)} vs ${esc(g.lowest)} ${pct(g.lowest_share)} · gap ${pct(g.gap)}. Reviewed with the chief risk officer; neither is a model feature.</span></div>`).join("")}
+      <table style="margin-top:10px"><thead><tr><th>Segment</th><th>Value</th><th class="r">Applications</th><th class="r">Default rate</th><th class="r">Flagged high risk</th><th class="r">AUC</th></tr></thead><tbody>
+      ${(f.rows||[]).map(r => `<tr><td>${esc(r.segment)}</td><td>${esc(r.value)}</td><td class="r num">${r.n}</td><td class="r num">${pct(r.default_rate,1)}</td><td class="r num">${pct(r.share_predicted_high_risk,1)}</td><td class="r num">${r.auc!=null?Number(r.auc).toFixed(3):"—"}</td></tr>`).join("")}</tbody></table></div>
+    <div class="panel" style="margin-top:14px"><div class="hd">Model assumptions <span class="muted small" style="font-weight:400">${d.assumptions.length} · creditlens.ml.features</span></div>
+      <div class="bd"><ol style="margin:0;padding-left:20px">${d.assumptions.map(a => `<li style="margin:4px 0">${esc(a)}</li>`).join("")}</ol></div></div>`;
+}
+
+/* ------------------------------- Release readiness (06b: checklist, gate, tests, deployment) */
+async function renderRelease(keep, recheck=false){
+  if(!keep) shell("Release readiness", "Go-live conditions, the evaluation gate, automated tests and the deployment path",
+    `<button class="btn" id="recheck">Re-check conditions</button>`);
+  if($("#recheck")) $("#recheck").onclick = () => { $("#recheck").disabled = true; renderRelease(true, true); };
+  let d; try { d = await api(`/api/platform/release?user_id=${S.user}&recheck=${recheck}`); } catch(e){ $("#pbody").innerHTML = `<div class="notice err">${esc(e.message)}</div>`; return; }
+  if(!onPage("release")) return;
+  if($("#recheck")) $("#recheck").disabled = false;
+  const items = d.checklist.items, met = items.filter(i => i.ok).length, g = d.gate, t = d.tests, dep = d.deployment;
+  const dis = canRun() ? "" : "disabled";
+  $("#pbody").innerHTML = `
+    <div class="panel"><div class="hd">Go-live checklist <span><span class="lz ${met===items.length?"ok":"pend"}">${met} of ${items.length} met</span> <span class="muted small" style="font-weight:400">checked ${when(d.checklist.checked_at)}</span></span></div>
+      <table><thead><tr><th style="width:28px">#</th><th>Condition</th><th>Owner</th><th>Evidence (computed now)</th><th>Status</th></tr></thead><tbody>
+      ${items.map((i,n) => `<tr><td class="num">${n+1}</td><td><b>${esc(i.condition)}</b><div class="ev">${esc(i.where)}</div></td><td>${esc(i.owner)}</td><td class="ev">${esc(i.evidence)}</td>
+        <td>${i.ok===true?`<span class="lz ok">Met</span>`:i.ok===false?`<span class="lz bad">Not met</span>`:`<span class="lz pend">Unknown</span>`}</td></tr>`).join("")}</tbody></table></div>
+    <div class="two" style="margin-top:14px">
+      <div class="panel"><div class="hd">Evaluation gate ${g?`<span class="lz ${g.passed?"ok":"bad"}">${g.passed?"Passed":"Failed"}</span>`:""}</div>
+        ${g ? `<table><thead><tr><th>Metric</th><th class="r">Score</th><th class="r">Floor</th><th>Result</th></tr></thead><tbody>
+          ${g.rows.map(r => `<tr><td class="mono">${esc(r.metric)}${r.note?`<div class="ev">${esc(r.note)}</div>`:""}</td><td class="r num">${r.value ?? "—"}</td><td class="r num">${r.threshold ?? "—"}</td>
+            <td><span class="lz ${r.verdict==="PASS"?"ok":r.verdict==="FAIL"?"bad":"new"}">${esc(title(r.verdict.toLowerCase()))}</span></td></tr>`).join("")}</tbody></table>
+          <div class="bd ev">Last run ${when(g.ran_at)} · ${g.regressed_prompt?"<b>candidate judge prompt</b>":"current prompts"} · floors in evals/thresholds.json</div>`
+          : `<div class="empty">The gate has not run.</div>`}
+        <div class="bd" style="border-top:1px solid var(--line2)"><div class="jobline">
+          <select id="gopt" ${dis}><option value="">Current prompts</option><option value="candidate">Candidate judge prompt</option></select>
+          <button class="btn pri" id="rungate" ${dis||running("gate")?"disabled":""} title="${runTitle()}">Run gate</button></div>${jobHtml("gate")}</div></div>
+      <div class="panel"><div class="hd">Automated tests ${t?`<span class="lz ${t.total.failed?"bad":"ok"}">${t.total.failed?t.total.failed+" failed":"All passed"}</span>`:""}</div>
+        ${t ? `<div class="kpis" style="margin:10px 14px"><div class="kpi"><label>Tests</label><div class="v num">${t.total.tests}</div></div><div class="kpi"><label>Passed</label><div class="v num">${t.total.passed}</div></div>
+          <div class="kpi ${t.total.failed?"fail":""}"><label>Failed</label><div class="v num">${t.total.failed}</div><div class="t">${t.total.skipped} skipped</div></div></div>
+          <div style="max-height:300px;overflow:auto"><table><thead><tr><th>File</th><th class="r">Tests</th><th class="r">Passed</th><th class="r">Failed</th><th class="r">Time</th></tr></thead><tbody>
+          ${t.files.map(f => `<tr><td class="mono">${esc(f.file)}</td><td class="r num">${f.tests}</td><td class="r num">${f.passed}</td><td class="r num">${f.failed||""}</td><td class="r num">${f.seconds.toFixed(1)} s</td></tr>`).join("")}</tbody></table></div>
+          ${t.failures.length?`<div class="bd"><div class="notice err"><b>Failing</b><span>${t.failures.map(x => esc(x.file+" :: "+x.test)).join("<br>")}</span></div></div>`:""}
+          <div class="bd ev">Last run ${when(t.ran_at)} · ${t.total.seconds} s · offline suite, what CI runs</div>`
+          : `<div class="empty">No test run recorded on this server.</div>`}
+        <div class="bd" style="border-top:1px solid var(--line2)"><div class="jobline"><button class="btn pri" id="runtests" ${dis||running("tests")?"disabled":""} title="${runTitle()}">Run tests</button>
+          <span class="ev">about four and a half minutes</span></div>${jobHtml("tests")}</div></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><div class="hd">Deployment <span class="lz new">${esc(dep.status)}</span></div><div class="bd">
+      <div class="sec" style="margin-top:0"><h4>CI pipeline · every push</h4><div class="pipe">${d.ci.map((c,i) => `<div class="st"><b>${i+1} · ${esc(c.name)}</b><span>${esc(c.why)}</span></div>`).join("")}<div class="st"><b>Merge</b><span>only when all three pass</span></div></div></div>
+      <div class="two" style="margin-top:12px"><div><div class="sec" style="margin-top:0"><h4>Container image · ${esc(dep.image.file)}</h4><div class="dl">
+        <div>Base</div><div class="mono">${esc(dep.image.base)}</div><div>Runs as</div><div class="mono">${esc(dep.image.user)}</div><div>Port</div><div class="mono">${esc(dep.image.port)}</div>
+        <div>Health check</div><div>${dep.image.healthcheck?"Yes":"No"}</div><div>Target</div><div>${esc(dep.target)}</div></div></div></div>
+        <div><div class="sec" style="margin-top:0"><h4>Deployment steps · ${esc(dep.guide)}</h4><ol style="margin:0;padding-left:20px">${dep.steps.map(s => `<li style="margin:3px 0">${esc(s)}</li>`).join("")}</ol></div></div></div>
+    </div></div>`;
+  if($("#rungate")) $("#rungate").onclick = () => startJob("gate", $("#gopt").value);
+  if($("#runtests")) $("#runtests").onclick = () => startJob("tests");
+}
+
+/* ------------------------------- Monitoring (07b) */
+async function renderMonitoring(keep){
+  if(!keep) shell("Monitoring", "How the review assistant behaves in use: speed, approver decisions, model providers, drift and incidents");
+  let d; try { d = await api(`/api/platform/monitoring?user_id=${S.user}`); } catch(e){ $("#pbody").innerHTML = `<div class="notice err">${esc(e.message)}</div>`; return; }
+  if(!onPage("monitoring")) return;
+  const rv = d.reviews, dc = d.decisions, gw = d.gateway, dr = d.drift, dl = d.last_drill, dis = canRun() ? "" : "disabled";
+  const keptRate = dc.with_a_proposal ? dc.kept / dc.with_a_proposal : null;
+  $("#pbody").innerHTML = `
+    <div class="kpis" style="background:#fff;margin-bottom:14px;grid-template-columns:repeat(4,minmax(0,1fr))">
+      <div class="kpi"><label>Credit reviews since start</label><div class="v num">${rv.count}</div><div class="t">${rv.avg_seconds!=null?"average "+rv.avg_seconds+" s":"none yet"}</div></div>
+      <div class="kpi"><label>Proposals kept by the approver</label><div class="v num">${keptRate!=null?pct(keptRate):"—"}</div><div class="t">${dc.kept} of ${dc.with_a_proposal} direct proposals · alert below ${pct(dc.alert_below)}</div></div>
+      <div class="kpi"><label>Model calls</label><div class="v num">${gw.calls}</div><div class="t">${gw.cache_hits} from cache · ${gw.offline?"offline":"live"}</div></div>
+      <div class="kpi ${dr&&dr.n_drifted?"fail":""}"><label>Drifted features</label><div class="v num">${dr?dr.n_drifted+" of "+dr.n_columns:"—"}</div><div class="t">${dr?"checked "+when(dr.ran_at):"not checked"}</div></div>
+    </div>
+    <div class="two">
+      <div class="panel"><div class="hd">Review performance · where the time goes</div>
+        ${rv.timing.length ? `<table><thead><tr><th>Step</th><th class="r">Average</th><th>Share</th><th class="r">Runs</th></tr></thead><tbody>
+          ${rv.timing.map(s => `<tr><td>${esc(s.step)}</td><td class="r num">${ms(s.avg_ms)}</td><td><div class="bar"><i style="width:${(s.share*100).toFixed(0)}%"></i></div></td><td class="r num">${s.n}</td></tr>`).join("")}</tbody></table>
+          <div class="bd ev">Optimise the largest bar first.</div>` : `<div class="empty">No credit reviews since the server started. Run one from the work queue.</div>`}</div>
+      <div class="panel"><div class="hd">Approver decisions</div><div class="bd"><div class="dl">
+          <div>Decisions recorded</div><div class="num">${dc.decided}</div><div>Direct proposals kept</div><div class="num">${dc.kept} of ${dc.with_a_proposal}</div>
+          <div>Referred to the approver</div><div class="num">${dc.referred}</div><div>Conditions added by the approver</div><div class="num">${dc.conditions_added}</div></div></div>
+        ${dc.recent.length?`<table><thead><tr><th>Application</th><th>Proposed</th><th>Decided</th><th>Conditions</th></tr></thead><tbody>${dc.recent.map(p => `<tr><td><a class="mono" href="#/application/${p.application_id}">${p.application_id}</a></td><td>${esc(recText(p.proposal))}</td><td>${esc(title(p.decision))}</td><td>${p.conditions_added?"Added":"—"}</td></tr>`).join("")}</tbody></table>`:""}</div>
+    </div>
+    <div class="panel" style="margin-top:14px"><div class="hd">Model providers · resilience</div><div class="bd">
+      <div class="chain"><span class="lk">Cache ${gw.cache?"on":"off"}</span><span class="ar">→</span><span class="lk mono">${esc(gw.primary)}</span>${gw.fallbacks.map(f => `<span class="ar">→</span><span class="lk mono">${esc(f)}</span>`).join("")}<span class="ar">→</span><span class="lk">Honest error</span>
+        ${gw.offline?`<span class="lz info" style="margin-left:8px">Offline: the stub answers</span>`:""}</div>
+      <div class="jobline" style="margin-top:12px"><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kill" ${dis}> Cut the primary provider</label>
+        <button class="btn pri" id="drill" ${dis} title="${runTitle()}">Run resilience drill</button></div>
+      ${dl?`<table style="margin-top:10px"><thead><tr><th>#</th><th>Answered by</th><th>Cached</th><th class="r">Latency</th><th>Answer</th></tr></thead><tbody>${dl.rows.map(r => `<tr><td class="num">${r.n}</td><td class="mono">${esc(r.model)}</td><td>${r.cached?"Yes":"No"}</td><td class="r num">${r.latency_s} s</td><td class="ev">${esc(r.error||r.answer)}</td></tr>`).join("")}</tbody></table>
+        <div class="ev" style="margin-top:6px">${when(dl.ran_at)} · ${dl.calls} calls · ${dl.failures} failures · ${dl.primary_cut?"primary cut":"primary available"} · cost ${dl.estimated_cost_usd!=null?"$"+dl.estimated_cost_usd:"unknown (no prices configured)"}</div>`:""}
+    </div></div>
+    <div class="panel" style="margin-top:14px"><div class="hd">Data drift ${dr?`<span class="lz ${dr.n_drifted?"bad":"ok"}">${dr.n_drifted} of ${dr.n_columns} features drifted</span>`:""}</div>
+      ${dr?`<div class="bd ev">${esc(dr.method)} · reference ${inr(dr.reference_rows)} training rows vs ${inr(dr.current_rows)} current applications${dr.injected_drift?" · <b>simulated next quarter</b>":""} · ${when(dr.ran_at)}</div>
+        <div style="max-height:300px;overflow:auto"><table><thead><tr><th>Feature</th><th>Test</th><th class="r">Statistic</th><th class="r">p-value</th><th class="r">Training median</th><th class="r">Current median</th><th>Result</th></tr></thead><tbody>
+        ${(dr.columns||[]).map(c => `<tr><td class="mono">${esc(c.column)}</td><td>${esc(c.test)}</td><td class="r num">${c.statistic??"—"}</td><td class="r num">${c.p_value??"—"}</td><td class="r num">${c.reference_median??"—"}</td><td class="r num">${c.current_median??"—"}</td>
+          <td><span class="lz ${c.drifted?"bad":"ok"}">${c.drifted?"Drifted":"Stable"}</span></td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">No drift check recorded.</div>`}
+      <div class="bd" style="border-top:1px solid var(--line2)"><div class="jobline"><select id="dopt" ${dis}><option value="">Current applications</option><option value="next_quarter">Simulate next quarter</option></select>
+        <button class="btn pri" id="rundrift" ${dis||running("drift")?"disabled":""} title="${runTitle()}">Check drift</button></div>${jobHtml("drift")}</div></div>
+    <div class="panel" style="margin-top:14px"><div class="hd">Incident drills</div>
+      <table><thead><tr><th>Incident</th><th>Symptom</th><th>Where to look</th><th>Fix</th><th>Last drill</th><th></th></tr></thead><tbody>
+      ${d.incidents.map(i => `<tr><td><b>${esc(i.title)}</b></td><td class="ev">${esc(i.symptom||"—")}</td><td class="ev">${esc(i.where_to_look||"—")}</td><td class="ev">${esc(i.fix||"—")}</td>
+        <td class="num small">${i.ran_at?when(i.ran_at):"—"}</td><td><button class="btn" data-inc="${i.name}" ${dis||running("incident:"+i.name)?"disabled":""} title="${runTitle()}">Run drill</button>${jobHtml("incident:"+i.name)}</td></tr>`).join("")}</tbody></table></div>`;
+  if($("#drill")) $("#drill").onclick = async () => { $("#drill").disabled = true;
+    try { await api("/api/platform/drill", {method:"POST", body:JSON.stringify({user_id:S.user, kill_primary:$("#kill").checked})}); toast("Resilience drill completed.", "ok"); } catch(e){ toast(e.message, "err"); }
+    renderMonitoring(true); };
+  if($("#rundrift")) $("#rundrift").onclick = () => startJob("drift", $("#dopt").value);
+  document.querySelectorAll("[data-inc]").forEach(b => b.onclick = () => startJob("incident", b.dataset.inc));
+}
+
+/* ------------------------------- Statement screening (08) */
+const FLAG = {GROUP:["Connected group","info"], RULE_5_2:["Group limit breach · 5.2","bad"], ROUND_TRIP:["Round-tripping","bad"], RELATED_INFLOW:["Related-party inflows","pend"],
+  PASS_THROUGH:["Pass-through to an individual","pend"], REVENUE_GAP:["Turnover gap","pend"], RULE_4_1:["Cheque returns · 4.1","bad"], SEASONAL_PATTERN:["Seasonal pattern · mitigant","ok"],
+  WINDOW_DRESSING:["Window dressing","bad"], SECTOR_MISMATCH:["Sector mismatch","bad"], FOOTING:["Financials do not foot","bad"]};
+const flagLz = f => { const [l,k] = FLAG[f.code] || [title(f.code.toLowerCase()),"new"]; return `<span class="lz ${k}">${esc(l)}</span>`; };
+function evidenceHtml(ev){
+  return `<div class="kv2" style="grid-template-columns:200px 1fr">${Object.entries(ev||{}).map(([k,v]) => `<div>${esc(title(k).replace(/ inr 000$/i," (INR '000)"))}</div><div class="num">${esc(Array.isArray(v)?v.join(", "):typeof v==="object"&&v?JSON.stringify(v):typeof v==="number"?(Math.abs(v)<=1&&!Number.isInteger(v)?pct(v,1):Math.round(v).toLocaleString("en-IN")):v)}</div>`).join("")}</div>`;
+}
+async function renderScreening(keep){
+  if(!keep) shell("Statement screening", "Bank-statement checks on applications referred to the Head of Credit: leads for a person, not verdicts");
+  let d; try { d = await api(`/api/platform/screening?user_id=${S.user}`); } catch(e){ $("#pbody").innerHTML = `<div class="notice err"><b>Access denied.</b> <span>${esc(e.message)}</span></div>`; return; }
+  if(!onPage("screening")) return;
+  S.scrSel = S.scrSel || d[0].application_id;
+  const sel = d.find(a => a.application_id === S.scrSel) || d[0];
+  $("#pbody").innerHTML = `<div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+    <div class="panel"><table><thead><tr><th>Application</th><th>Borrower</th><th class="r">Requested</th><th>Signals</th></tr></thead><tbody>
+      ${d.map(a => `<tr class="row ${a.application_id===sel.application_id?"sel":""}" data-id="${a.application_id}"><td class="mono">${a.application_id}</td><td>${esc(a.borrower)}<div class="ev">${esc(a.sector)}</div></td>
+        <td class="r num">${cr(a.requested_inr_000)}</td><td><div class="chips">${a.flags.map(flagLz).join("") || `<span class="muted">None</span>`}</div></td></tr>`).join("")}</tbody></table></div>
+    <div class="panel"><div class="hd">${esc(sel.application_id)} · ${esc(sel.borrower)} ${sel.in_queue?`<a href="#/application/${sel.application_id}" class="small" style="font-weight:400">Open in work queue</a>`:""}</div>
+      <div class="bd"><div class="dl" style="margin-bottom:10px"><div>Requested</div><div class="num">${cr(sel.requested_inr_000)}</div><div>Declared turnover</div><div class="num">${cr(sel.declared_revenue_inr_000)}</div></div>
+      ${sel.flags.map(f => `<div class="sec"><h4 style="display:flex;gap:8px;align-items:center">${flagLz(f)}</h4><div style="margin:2px 0 6px">${esc(f.title)}</div>${evidenceHtml(f.evidence)}</div>`).join("") || `<div class="empty">No signals.</div>`}
+      </div></div>
+  </div>`;
+  document.querySelectorAll("#pbody tr.row").forEach(r => r.onclick = () => { S.scrSel = r.dataset.id; renderScreening(true); });
+}
+
 function openModal(t, body){ $("#mbox").innerHTML = `<div class="hd">${t}<a onclick="closeModal()">Close</a></div><div class="bd">${body}</div>`; $("#modal").style.display = "flex"; }
 function closeModal(){ $("#modal").style.display = "none"; }
 function help(){
