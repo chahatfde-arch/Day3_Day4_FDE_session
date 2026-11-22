@@ -152,6 +152,9 @@ def public_job(j: dict) -> dict:
 
 
 # ------------------------------------------------------------------------------------------- systems (05b)
+MCP_HANDSHAKE: dict = {}      # the last MCP handshake with the Jira server, from "Test connections"
+
+
 def systems(ctx: dict, probe: bool) -> dict:
     from creditlens.config import settings
     from creditlens.integrations.oracle import CoreBankingAdapter
@@ -192,11 +195,45 @@ def systems(ctx: dict, probe: bool) -> dict:
     jira = read_json(ctx["JIRA"]) or {}
     issues = jira.get("issues", jira) if isinstance(jira, dict) else jira
     n_issues = len(issues) if isinstance(issues, (list, dict)) else 0
-    cloud = bool(os.environ.get("JIRA_URL") and os.environ.get("JIRA_API_TOKEN"))
-    out["systems"].append({"name": "Exception tickets", "vendor": "Jira (through an MCP server)", "protocol": "MCP: JSON-RPC, in process",
-                           "endpoint": os.environ.get("JIRA_URL") or (str(ctx["JIRA"].relative_to(REPO)) if ctx["JIRA"].is_relative_to(REPO) else ctx["JIRA"].name),
-                           "pattern": "idempotency key per application and rule", "mode": "Live" if cloud else "Test project",
-                           "detail": f"{n_issues} ticket(s) in the test project; tools: create, get, search (no delete)"})
+    from creditlens.mcp_jira.backend import jira_cloud_configured, jira_is_local_mock
+    cloud = jira_cloud_configured()
+    local = cloud and jira_is_local_mock()       # the Jira-compatible service on this laptop: "Local", never "Live"
+    jira_url = os.environ.get("JIRA_BASE_URL", "")
+    transport = os.environ.get("WORKBENCH_MCP_TRANSPORT", "stdio")
+    jira_row = {"name": "Exception tickets",
+                "vendor": ("Local Jira-compatible service" if local else "Jira") + ", behind our MCP server (creditlens-jira)",
+                "protocol": "MCP: JSON-RPC over stdio" if transport == "stdio" else "MCP backend, called in process",
+                "endpoint": "python -m creditlens.mcp_jira → " + (jira_url or (str(ctx["JIRA"].relative_to(REPO)) if ctx["JIRA"].is_relative_to(REPO) else ctx["JIRA"].name)),
+                "pattern": "idempotency key per application and rule · in-process fallback, labelled",
+                "mode": "Local" if local else ("Live" if cloud else "Test project"),
+                "detail": (f"tickets go to the local Jira mock at {jira_url}, which accepts any email and token"
+                           if local else f"{n_issues} ticket(s) in the test project") + "; tools: create, get, search (no delete)"}
+    if probe and cloud:
+        import requests
+        t = time.time()
+        try:
+            requests.get(jira_url.rstrip("/") + "/rest/api/3/myself", timeout=3,
+                         auth=(os.environ.get("JIRA_EMAIL", ""), os.environ.get("JIRA_API_TOKEN", ""))).raise_for_status()
+            jira_row["jira_ms"] = int((time.time() - t) * 1000)
+        except Exception as e:  # noqa: BLE001  configured but down: say so, tickets fall back to the test project
+            jira_row["mode"] = "Not reachable"
+            jira_row["detail"] = f"{jira_url} did not answer ({type(e).__name__}): tickets fall back to the test project, labelled; tools: create, get, search (no delete)"
+    if probe:
+        from creditlens.mcp_jira.client import inspect_server
+        try:
+            hs = inspect_server(str(ctx["JIRA"]))
+            MCP_HANDSHAKE.update(hs, checked_at=now(), ok=True)
+        except Exception as e:  # noqa: BLE001  a failed handshake is a finding, not a crash
+            MCP_HANDSHAKE.clear()
+            MCP_HANDSHAKE.update(ok=False, error=f"{type(e).__name__}: {str(e)[:160]}", checked_at=now())
+    if MCP_HANDSHAKE:
+        jira_row["mcp"] = dict(MCP_HANDSHAKE)
+        if MCP_HANDSHAKE.get("ok"):
+            jira_row["latency_ms"] = int(MCP_HANDSHAKE["seconds"] * 1000)
+            jira_row["detail"] += f"; handshake: {MCP_HANDSHAKE['server']} {MCP_HANDSHAKE['version']}, protocol {MCP_HANDSHAKE['protocol_version']}"
+        else:
+            jira_row["detail"] += f"; handshake failed ({MCP_HANDSHAKE['error']}): tickets are filed in process"
+    out["systems"].append(jira_row)
     # Slack
     slack = bool(os.environ.get("SLACK_BOT_TOKEN"))
     mapped = bool(os.environ.get("SLACK_USER_MAP"))

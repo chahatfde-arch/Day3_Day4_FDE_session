@@ -213,6 +213,15 @@ class Gateway:
         models = [model] if model else self.models
         key = DiskCache.key(models[0], messages, schema)
 
+        # Offline comes before the cache. Offline answers are never cached, so a cache hit here could
+        # only be a live model's answer, and the offline gate would quietly grade with a real model.
+        if self.offline:
+            text = _offline_answer(messages, response_model)
+            r = LLMResponse(text=text, model="offline-stub")
+            if response_model:
+                r.parsed = response_model.model_validate_json(text)
+            return r
+
         if self.cache and use_cache:
             hit = self.cache.get(key)
             if hit:
@@ -222,13 +231,6 @@ class Gateway:
                     r.parsed = response_model.model_validate_json(_extract_json(r.text))
                 record_generation(model=r.model, input=messages, output=r.text, cached=True)
                 return r
-
-        if self.offline:
-            text = _offline_answer(messages, response_model)
-            r = LLMResponse(text=text, model="offline-stub")
-            if response_model:
-                r.parsed = response_model.model_validate_json(text)
-            return r
 
         last_error: Optional[Exception] = None
         attempt_messages = list(messages)

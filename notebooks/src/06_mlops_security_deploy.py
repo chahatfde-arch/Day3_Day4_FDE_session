@@ -20,16 +20,24 @@
 # %%
 import sys
 if "google.colab" in sys.modules:   # Colab only. On a laptop this cell does nothing.
-    !git clone https://github.com/YOUR-USERNAME/creditlens-ai.git
-    %cd creditlens-ai
+    !git clone https://github.com/chahatfde-arch/Day3_Day4_FDE_session.git
+    %cd Day3_Day4_FDE_session
     !pip install -q -e ".[dev,ml,security,realdata]"
-    !python -m creditlens.generators --skip-pdfs
+    !python -m creditlens.generators            # with the PDFs: the evaluation gate at the end reads them
     !python -m creditlens.pipeline --load
     !python -m creditlens.data_real --only sba
-    import os
-    os.environ.setdefault("LLM_OFFLINE", "1")
 else:
-    print("Not on Colab: skipping the clone. The next cell finds your repo folder.")
+    print("Not on Colab: skipping the clone. You are already in the repo folder.")
+
+# %%
+import os
+from pathlib import Path
+while not Path("pyproject.toml").exists() and Path.cwd() != Path.cwd().parent:
+    os.chdir("..")
+assert Path("pyproject.toml").exists(), "Open this notebook from inside the repo folder."
+os.environ.setdefault("LLM_OFFLINE", "1")   # no API key needed today
+print("working folder:", Path.cwd())
+print("real loan book present:", Path("data/real/sba_loans.csv").exists(), "(if False: python -m creditlens.data_real --only sba)")
 
 # %% [markdown]
 # ## 1. MLOps and deployment architecture (C5 to C10, no code)

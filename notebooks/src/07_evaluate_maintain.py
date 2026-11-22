@@ -13,27 +13,52 @@
 # Topics: OB2 to OB5, OB10 to OB14 (observability and evaluation), OG4, OG5 (demo and handoff).
 
 # %%
+import os
 import sys
 if "google.colab" in sys.modules:   # Colab only. On a laptop this cell does nothing.
-    !git clone https://github.com/YOUR-USERNAME/creditlens-ai.git
-    %cd creditlens-ai
-    !pip install -q -e ".[dev,llm,ml,evals,realdata]"
-    !python -m creditlens.generators --skip-pdfs
+    !git clone https://github.com/chahatfde-arch/Day3_Day4_FDE_session.git
+    %cd Day3_Day4_FDE_session
+    !pip install -q -e ".[dev,llm,agents,ml,evals,realdata,retrieval]"
+    !python -m creditlens.generators
     !python -m creditlens.pipeline --load
     !python -m creditlens.data_real --only sba
-    import os
-    try:
-        from google.colab import userdata
-        for k in ("GEMINI_API_KEY", "GROQ_API_KEY", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_HOST"):
-            try:
-                os.environ[k] = userdata.get(k)
-            except Exception:
-                pass
-    except ImportError:
-        pass
-    os.environ.setdefault("LLM_OFFLINE", "0" if os.environ.get("GEMINI_API_KEY") or os.environ.get("GROQ_API_KEY") else "1")
+    from google.colab import userdata
+    for k in ("GEMINI_API_KEY", "GROQ_API_KEY", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_HOST"):
+        try:
+            os.environ[k] = userdata.get(k)
+        except Exception:
+            pass
 else:
-    print("Not on Colab: skipping the clone. The next cell finds your repo folder.")
+    print("Not on Colab: skipping the clone. You are already in the repo folder.")
+
+# %%
+import os
+from pathlib import Path
+while not Path("pyproject.toml").exists() and Path.cwd() != Path.cwd().parent:
+    os.chdir("..")
+assert Path("pyproject.toml").exists(), "Open this notebook from inside the repo folder."
+import sys
+if str(Path.cwd()) not in sys.path:
+    sys.path.insert(0, str(Path.cwd()))   # so the repo's own folders (evals, monitoring) import too
+print("working folder:", Path.cwd())
+
+# A live model only if you have a key (in .env or the environment). Otherwise offline: no API calls,
+# the same numbers for everyone. Set before anything from creditlens is imported: settings are read once.
+env_file = Path(".env").read_text(encoding="utf-8") if Path(".env").exists() else ""
+
+
+def key_value(name):
+    if os.environ.get(name):
+        return os.environ[name]
+    for line in env_file.splitlines():
+        if line.strip().startswith(name + "="):
+            return line.split("=", 1)[1].strip().strip("\"'")
+    return ""
+
+
+has_key = any(key_value(k) for k in ("GEMINI_API_KEY", "GROQ_API_KEY"))
+os.environ["LLM_OFFLINE"] = "0" if has_key else "1"
+print("model calls:", "live (an API key was found)" if has_key else "offline stub (no API key found)")
 
 # %% [markdown]
 # ## 1. Theory in one table

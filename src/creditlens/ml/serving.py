@@ -302,9 +302,8 @@ def _read_table(engine, table: str, where_column: str, value: str) -> Optional[d
     return dict(rows[0]) if rows else None
 
 
-@observe(name="ml.score_application")
-def score_application(application_id: str, db_url: Optional[str] = None) -> RiskScore:
-    """Assemble the features for one Good Bank application and score it.
+def features_for_application(application_id: str, db_url: Optional[str] = None) -> dict:
+    """The one SBA-shaped row the model sees for a Good Bank application.
 
     This is where train/serve skew becomes concrete: the application, the company and the
     bank-statement features are three different tables in Good Bank's world, and the
@@ -318,9 +317,13 @@ def score_application(application_id: str, db_url: Optional[str] = None) -> Risk
         raise ValueError(f"No application {application_id}")
     company = _read_table(engine, "companies", "company_id", str(application.get("company_id")))
     statement = _read_table(engine, "statement_features", "application_id", application_id)
+    return application_to_sba_features(application, company, statement)
 
-    features = application_to_sba_features(application, company, statement)
-    return score(features)
+
+@observe(name="ml.score_application")
+def score_application(application_id: str, db_url: Optional[str] = None) -> RiskScore:
+    """Assemble the features for one Good Bank application and score it."""
+    return score(features_for_application(application_id, db_url=db_url))
 
 
 # ---------------------------------------------------------------------------

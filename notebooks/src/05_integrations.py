@@ -20,10 +20,10 @@ if "google.colab" in sys.modules:   # Colab only. On a laptop this cell does not
     !git clone https://github.com/chahatfde-arch/Day3_Day4_FDE_session.git
     %cd Day3_Day4_FDE_session
     !pip install -q -e ".[dev,llm,agents,integrations]"
-    !python -m creditlens.generators --skip-pdfs
+    !python -m creditlens.generators
     !python -m creditlens.pipeline --load
 else:
-    print("Not on Colab: skipping the clone. The next cell finds your repo folder.")
+    print("Not on Colab: skipping the clone. You are already in the repo folder.")
 
 # %% [markdown]
 # **Laptop users:** skip the clone cell above. The next cell finds the repository root, so the notebook

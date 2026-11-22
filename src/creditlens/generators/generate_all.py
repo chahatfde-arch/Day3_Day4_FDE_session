@@ -77,10 +77,20 @@ def main() -> None:
     ap.add_argument("--data-root", type=Path, help="write somewhere other than data/")
     ap.add_argument("--seed", type=int, default=default_settings.seed)
     ap.add_argument("--skip-pdfs", action="store_true")
+    ap.add_argument("--force", action="store_true", help="with --skip-pdfs: delete the PDFs that already exist")
     a = ap.parse_args()
     s = replace(default_settings, seed=a.seed)
     if a.data_root:
         s = replace(s, paths=s.paths.with_data_root(a.data_root))
+    # A fast run deletes data/raw and writes it back without PDFs, which silently breaks extraction,
+    # retrieval and the evaluation gate. An old notebook cell re-run on a laptop did exactly that.
+    existing = sorted(s.paths.raw.rglob("*.pdf")) if s.paths.raw.exists() else []
+    if a.skip_pdfs and existing and not a.force:
+        print(f"Refusing to run: {len(existing)} PDFs already exist in {s.paths.raw}, and --skip-pdfs would "
+              "delete them (the policy manual and the statements the evaluations read).\n"
+              "Your data is untouched. To regenerate everything, run without --skip-pdfs (same seed, same "
+              "data). To really drop the PDFs, add --force.")
+        raise SystemExit(1)
     generate_all(s, skip_pdfs=a.skip_pdfs)
 
 

@@ -42,17 +42,19 @@ def wb(tmp_path_factory):
         sys.modules["workbench_server"] = mod          # pydantic resolves the request models through it
         spec.loader.exec_module(mod)
         offline_after_import = os.environ["LLM_OFFLINE"]
+        # keep what the server set (offline) while its tests run, as the real process does: the agent loads and
+        # reviews later, in the tests below, and must never reach a model provider. Restored after the module.
+        tmp = tmp_path_factory.mktemp("workbench")
+        mod.AUDIT, mod.JIRA = tmp / "audit.jsonl", tmp / "jira.json"
+        mod.offline_after_import = offline_after_import
+        from fastapi.testclient import TestClient
+        yield mod, TestClient(mod.app)
     finally:
         for k, v in saved.items():
             if v is None:
                 os.environ.pop(k, None)
             else:
                 os.environ[k] = v
-    tmp = tmp_path_factory.mktemp("workbench")
-    mod.AUDIT, mod.JIRA = tmp / "audit.jsonl", tmp / "jira.json"
-    mod.offline_after_import = offline_after_import
-    from fastapi.testclient import TestClient
-    return mod, TestClient(mod.app)
 
 
 # ----------------------------------------------------------------------------- fast: who may see what
@@ -133,6 +135,7 @@ def test_connected_systems_label_every_stand_in(wb):
     assert systems["Core banking"]["mode"] in {"Live", "Replica"}
     assert systems["Repayment history"]["mode"] in {"Live", "Estimated"}
     assert systems["Model gateway"]["mode"] == "Offline"
+    assert "MCP" in systems["Exception tickets"]["protocol"]
 
 
 # ----------------------------------------------------------------------------- slow: one file, review to decision
@@ -183,6 +186,7 @@ def test_raising_exceptions_twice_files_each_ticket_once(wb, rohan):
     assert first and all(t["created"] for t in first)
     assert [t["key"] for t in second] == [t["key"] for t in first]
     assert not any(t["created"] for t in second)
+    assert all(t["transport"] in {"stdio", "inprocess"} for t in first + second)   # every ticket says how it travelled
 
 
 @pytest.mark.slow

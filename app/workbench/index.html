@@ -222,7 +222,7 @@ async function systems(){
   $("#sysbox").innerHTML = `<div class="muted" style="margin-bottom:4px">Connected systems</div>
     <div>Core banking <span><span class="dot ${oracle?"on":"wait"}"></span> ${oracle?"Live":"Replica"}</span></div>
     <div>Repayments <span><span class="dot ${soap?"on":"wait"}"></span> ${soap?"Live":"Estimated"}</span></div>
-    <div>Jira <span class="muted">Test project</span></div><div>Slack <span class="muted">Test mode</span></div>`;
+    <div>Jira <span class="muted">${y.jira==="cloud"?"Live":y.jira==="local"?"Local mock":"Test project"}</span></div><div>Slack <span class="muted">Test mode</span></div>`;
   setTimeout(systems, 30000);
 }
 async function loadQueue(){
@@ -358,7 +358,7 @@ function tabHtml(){
       <table><thead><tr><th>Due</th><th class="r">Amount (INR '000)</th><th>Paid</th><th class="r">Days late</th></tr></thead><tbody>${c.entries.map(x => `<tr><td class="num">${day(x.due_date)}</td><td class="r num">${inr(x.amount)}</td><td class="num">${x.paid_on?day(x.paid_on):"Not paid"}</td><td class="r num">${x.days_late||""}</td></tr>`).join("")}</tbody></table>`; }
   if(S.tab==="exc"){ const failed = e.checks.filter(x => !x.passed);
     return failed.length ? `<table><thead><tr><th>Rule</th><th>Exception</th><th>Ticket</th></tr></thead><tbody>${failed.map(x => { const t = (r.tickets||[]).find(t => (t.idempotency_key||"").endsWith(":"+x.rule_id));
-      return `<tr><td class="mono">${esc(x.rule_id)}</td><td>${esc(x.rule_text)}</td><td>${t?`<span class="mono">${esc(t.key)}</span> <span class="muted small">${t.created?"raised":"existing"}</span>`:`<span class="muted">Not raised</span>`}</td></tr>`; }).join("")}</tbody></table>` : `<div class="empty">No policy exceptions on this application.</div>`; }
+      return `<tr><td class="mono">${esc(x.rule_id)}</td><td>${esc(x.rule_text)}</td><td>${t?`<span class="mono">${esc(t.key)}</span> <span class="muted small">${t.created?"raised":"existing"}${t.transport?` · ${t.transport==="stdio"?"via MCP":"in process"}`:""}</span>`:`<span class="muted">Not raised</span>`}</td></tr>`; }).join("")}</tbody></table>` : `<div class="empty">No policy exceptions on this application.</div>`; }
   if(S.tab==="act") return `<div class="bd"><div class="sec" style="margin-top:0"><h4>Processing log</h4></div></div><table><thead><tr><th>Step</th><th>Result</th><th class="r">Duration</th></tr></thead><tbody>${(r.log||[]).map(l => `<tr><td>${esc(STEPNAME[l.step.startsWith("core banking")?"connect":l.step]||l.step)}</td><td class="muted">${esc(l.detail||"")}</td><td class="r num">${l.ms!=null?(l.ms>=1000?(l.ms/1000).toFixed(1)+" s":l.ms+" ms"):""}</td></tr>`).join("")}</tbody></table>
     <div class="bd"><div class="sec"><h4>Audit trail</h4></div></div>${auditTable(S.rec.data.audit, false)}`;
   return "";
@@ -433,7 +433,7 @@ async function raise(){
   try { const r = await api(`/api/reviews/${S.rec.id}/tickets`, {method:"POST", body:JSON.stringify({user_id:S.user})});
     if(!r.tickets.length){ toast("No policy exceptions to raise."); return; }
     S.rec.data.review.tickets = r.tickets; S.rec.data.audit = r.audit;
-    toast(r.tickets.map(t => `${t.key} ${t.created ? "raised" : "already exists"}`).join(" · "), "ok"); S.tab = "exc"; renderRecord();
+    toast(r.tickets.map(t => `${t.key} ${t.created ? "raised" : "already exists"}`).join(" · ") + (r.tickets.every(t => t.transport==="stdio") ? " · through the MCP server" : ""), "ok"); S.tab = "exc"; renderRecord();
   } catch(e){ toast(e.message, "err"); }
 }
 async function notify(){
@@ -519,12 +519,29 @@ async function renderSystems(keep, probe=false){
       ${d.systems.map(s => `<tr><td><b>${esc(s.name)}</b><div class="ev">${esc(s.detail)}</div></td><td>${esc(s.vendor)}</td><td>${esc(s.protocol)}</td>
         <td class="mono" style="word-break:break-all">${esc(s.endpoint)}</td><td class="ev">${esc(s.pattern)}${s.breaker?`<br>circuit breaker: <b>${esc(s.breaker)}</b>`:""}</td>
         <td><span class="lz ${MODE(s.mode)}">${esc(s.mode)}</span></td><td class="r num">${s.latency_ms!=null?ms(s.latency_ms):"—"}</td></tr>`).join("")}</tbody></table></div>
+    ${mcpPanel(d.systems.find(s => s.name==="Exception tickets"))}
     <div class="panel"><div class="hd">Docker services <span class="muted small" style="font-weight:400">${d.docker.available?"Docker running":"Docker not running"}</span></div>
       <table><thead><tr><th>Container</th><th>Profile</th><th>Purpose</th><th>Used by</th><th>Image</th><th>Ports (laptop:container)</th><th>State</th></tr></thead><tbody>
       ${d.docker.services.map(s => `<tr><td class="mono">${esc(s.name)}</td><td>${esc(s.profile)}</td><td>${esc(s.what)}</td><td class="ev">${esc(s.used_by)}</td><td class="mono small">${esc(s.image||"—")}</td>
         <td class="mono">${esc(s.ports||"—")}</td><td><span class="lz ${s.state==="running"?"ok":s.state==="stopped"?"pend":"new"}">${esc(title(s.state))}${s.healthy?" · healthy":""}</span></td></tr>`).join("")}</tbody></table>
       <div class="bd ev">Start the bank's systems: <span class="mono">${esc(d.docker.start)}</span> · one profile at a time on an 8 GB laptop.</div></div>
     </div>`;
+}
+
+function mcpPanel(s){
+  const m = s && s.mcp;
+  const head = `<div class="hd">MCP server · Jira tickets <span class="muted small" style="font-weight:400">${m?`Handshake ${when(m.checked_at)}`:"Not checked yet"}</span></div>`;
+  if(!m) return `<div class="panel">${head}<div class="bd ev">Press <b>Test connections</b>: the workbench starts <span class="mono">python -m creditlens.mcp_jira</span> as a child process, shakes hands over stdio and lists the tools it offers. Every exception ticket is filed the same way.</div></div>`;
+  if(!m.ok) return `<div class="panel">${head}<div class="bd"><div class="notice err">The handshake failed: ${esc(m.error)}. Tickets are still filed, in process, and the audit trail says so.</div></div></div>`;
+  return `<div class="panel">${head}
+    <div class="fields" style="padding:12px 16px">
+      <div><label>Server</label><span class="mono">${esc(m.server)} ${esc(m.version)}</span></div><div><label>Protocol version</label><span class="mono">${esc(m.protocol_version)}</span></div>
+      <div><label>Transport</label><span>JSON-RPC over stdio, started with <span class="mono">${esc(m.command)}</span></span></div><div><label>Start and answer</label><span class="num">${ms(Math.round(m.seconds*1000))}</span></div>
+    </div>
+    <div class="bd ev" style="padding-top:0">Instructions the server gives every client: ${esc(m.instructions)}</div>
+    <table><thead><tr><th>Tool</th><th>What it does</th><th>Arguments</th></tr></thead><tbody>
+    ${m.tools.map(x => `<tr><td class="mono"><b>${esc(x.name)}</b></td><td>${esc(x.description)}</td><td class="mono small">${esc(x.arguments.join(", "))}</td></tr>`).join("")}</tbody></table>
+    <div class="bd ev">${m.tools.length} tools and no delete: the agent cannot remove a ticket, whatever its prompt says.</div></div>`;
 }
 
 /* ------------------------------- Model governance (06b levels 1 to 3) */

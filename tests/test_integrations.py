@@ -20,7 +20,7 @@ def existing_loans() -> pd.DataFrame:
 
 
 def test_oracle_adapter_maps_legacy_columns_to_our_schema(existing_loans):
-    cb = CoreBankingAdapter()
+    cb = CoreBankingAdapter(dsn="")   # the stand-in on purpose, even when .env points at a running Oracle
     cb.ensure_sqlite(rebuild=True)
     assert cb.backend != "oracle"
     assert COLUMN_MAP["CUST_ID"] == "company_id"

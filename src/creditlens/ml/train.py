@@ -1,8 +1,9 @@
 """Train the default-risk model on the real SBA loan book, with MLflow tracking.
 
 The one idea this module teaches: **a model is not a file, it is a tracked experiment**.
-Two models are trained every run:
+Two models are trained every run, and both are measured against a floor:
 
+    stub       the rule-based score the agent used before any model (no training)
     baseline   logistic regression  (simple, linear, easy to explain)
     challenger gradient boosting    (non-linear, usually better, harder to explain)
 
@@ -52,6 +53,7 @@ from creditlens.ml.features import (
 
 REGISTERED_MODEL_NAME = "creditlens-risk"
 CHAMPION_ALIAS = "champion"
+STUB_RUN_NAME = "stub_rules"
 QUICK_ROWS = 6000
 HIGH_RISK_THRESHOLD = 0.2  # the "high" band boundary, shared with creditlens.ml.serving
 TOP_STATES_FOR_FAIRNESS = 10
@@ -297,6 +299,20 @@ def train(experiment: str = "creditlens-risk", data_path: Optional[str] = None,
     fitted: dict[str, Any] = {}
     run_ids: dict[str, str] = {}
 
+    # The floor: the rule-based stub the agent answers with when no model exists, scored on the
+    # same held-out loans. Logged beside the models, never registered: a model must beat it.
+    from creditlens.ml.serving import stub_score
+
+    stub_proba = np.array([stub_score(row).probability_of_default for row in X_test.to_dict("records")])
+    stub_metrics = evaluate(y_test, stub_proba)
+    with mlflow.start_run(run_name=STUB_RUN_NAME):
+        mlflow.log_params({"model": STUB_RUN_NAME, "flavour": "rules, no training", "quick": quick,
+                           "n_test": len(X_test), "seed": settings.seed})
+        mlflow.log_metrics(stub_metrics)
+    if verbose:
+        print(f"{STUB_RUN_NAME:18s} AUC {stub_metrics['auc']:.4f}  PR-AUC {stub_metrics['pr_auc']:.4f}  "
+              f"Brier {stub_metrics['brier']:.4f}  [rules, no training: the floor]")
+
     for name, pipeline, flavour in candidates:
         with mlflow.start_run(run_name=name) as run:
             pipeline.fit(X_train, y_train)
@@ -360,6 +376,8 @@ def train(experiment: str = "creditlens-risk", data_path: Optional[str] = None,
         # every candidate on the same held-out set, so the comparison survives without the MLflow server
         "candidates": {k: {"algorithm": v["flavour"], "auc": round(v["auc"], 4), "pr_auc": round(v["pr_auc"], 4),
                            "brier": round(v["brier"], 4)} for k, v in results.items()},
+        "floor": {"name": STUB_RUN_NAME, "auc": round(stub_metrics["auc"], 4),
+                  "pr_auc": round(stub_metrics["pr_auc"], 4), "brier": round(stub_metrics["brier"], 4)},
     }
     model_path = out_dir / "model.joblib"
     joblib.dump(champion, model_path)
@@ -369,7 +387,7 @@ def train(experiment: str = "creditlens-risk", data_path: Optional[str] = None,
         print(f"Champion: {champion_name} (AUC {metadata['auc']}), saved to {model_path}")
         print(f"Fairness report: {fair_path}")
 
-    return {"champion": champion_name, "metrics": results, "metadata": metadata,
+    return {"champion": champion_name, "metrics": results, "stub": stub_metrics, "metadata": metadata,
             "model_path": str(model_path), "fairness_path": str(fair_path),
             "tracking_uri": tracking_uri or default_tracking_uri()}
 

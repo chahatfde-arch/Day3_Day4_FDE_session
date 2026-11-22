@@ -2,6 +2,7 @@
 the CI gate fails on a regressed prompt. All offline."""
 from __future__ import annotations
 
+import json
 import os
 
 import pytest
@@ -87,3 +88,6 @@ def test_gate_passes_by_default_and_fails_with_a_regressed_prompt(tmp_path, monk
     bad = run_gate(limit=2, regressed=True, verbose=False)
     assert bad["passed"] is False
     assert "judge_agreement" in bad["failed"]
+    # the drill writes beside the real result, never over it
+    assert json.loads((tmp_path / "gate.json").read_text())["passed"] is True
+    assert json.loads((tmp_path / "gate_regressed.json").read_text())["passed"] is False

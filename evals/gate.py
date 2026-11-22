@@ -190,8 +190,11 @@ def run_gate(limit: int = 10, regressed: bool = False, thresholds_path: Optional
         "bank": settings.bank_name,
     }
 
-    RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RESULTS_PATH.write_text(json.dumps(result, indent=1, default=str), encoding="utf-8")
+    # the regressed-prompt drill writes beside the real result, never over it: gate.json is what the release
+    # checklist and the workbench read, and a teaching drill must not turn the real release red
+    out_path = RESULTS_PATH.with_name("gate_regressed.json") if regressed else RESULTS_PATH
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(result, indent=1, default=str), encoding="utf-8")
 
     if verbose:
         print(f"Eval gate{' (regressed prompt)' if regressed else ''}")
@@ -201,11 +204,11 @@ def run_gate(limit: int = 10, regressed: bool = False, thresholds_path: Optional
                   "These evals belong to other milestones and are not in the repository yet.")
         if failures:
             print(f"GATE FAILED: {', '.join(result['failed'])}")
-            print("What to do: look at evals/results/gate.json, then at the change that moved the "
+            print(f"What to do: look at evals/results/{out_path.name}, then at the change that moved the "
                   "metric. Do not lower the threshold to make this green.")
         else:
             print("GATE PASSED")
-        print(f"Written to {RESULTS_PATH}")
+        print(f"Written to {out_path}")
     return result
 
 

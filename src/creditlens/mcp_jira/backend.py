@@ -115,13 +115,17 @@ class JiraCloud:
         self.base_url = base_url.rstrip("/")
         self.auth = (email, api_token)
         self.timeout = timeout
+        # Say which Jira answered: a real site, or the local Jira-compatible service.
+        self.label = "jira-local-mock" if jira_is_local_mock(self.base_url) else "jira-cloud"
 
     def _request(self, method: str, path: str, **kwargs) -> Any:
         import requests
 
+        # Merge, never pass twice: create_issue adds Content-Type, and a second `headers=`
+        # keyword made every create fail with a TypeError before it reached Jira.
+        headers = {"Accept": "application/json", **kwargs.pop("headers", {})}
         response = requests.request(method, f"{self.base_url}{path}", auth=self.auth,
-                                    headers={"Accept": "application/json"},
-                                    timeout=self.timeout, **kwargs)
+                                    headers=headers, timeout=self.timeout, **kwargs)
         response.raise_for_status()
         return response.json() if response.content else {}
 
@@ -150,7 +154,7 @@ class JiraCloud:
                 "summary": summary, "description": description,
                 "labels": [label] if label else [], "idempotency_key": idempotency_key,
                 "status": "To Do", "url": f"{self.base_url}/browse/{created['key']}",
-                "backend": "jira-cloud", "created": True}
+                "backend": self.label, "created": True}
 
     def get_issue(self, key: str) -> dict:
         data = self._request("GET", f"/rest/api/3/issue/{key}")
@@ -158,7 +162,7 @@ class JiraCloud:
         return {"key": data.get("key", key), "id": data.get("id", ""),
                 "summary": fields.get("summary", ""), "labels": fields.get("labels", []),
                 "status": (fields.get("status") or {}).get("name", ""),
-                "url": f"{self.base_url}/browse/{data.get('key', key)}", "backend": "jira-cloud"}
+                "url": f"{self.base_url}/browse/{data.get('key', key)}", "backend": self.label}
 
     def search_issues(self, jql_or_text: str) -> list[dict]:
         jql = jql_or_text if "=" in jql_or_text or "~" in jql_or_text else f'text ~ "{jql_or_text}"'
@@ -169,7 +173,7 @@ class JiraCloud:
             out.append({"key": issue["key"], "id": issue.get("id", ""),
                         "summary": fields.get("summary", ""), "labels": fields.get("labels", []),
                         "status": (fields.get("status") or {}).get("name", ""),
-                        "url": f"{self.base_url}/browse/{issue['key']}", "backend": "jira-cloud"})
+                        "url": f"{self.base_url}/browse/{issue['key']}", "backend": self.label})
         return out
 
 
@@ -182,9 +186,55 @@ def jira_cloud_configured() -> bool:
     return all(os.environ.get(name) for name in ("JIRA_BASE_URL", "JIRA_EMAIL", "JIRA_API_TOKEN"))
 
 
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "jira-mock", "host.docker.internal"}
+
+
+def jira_is_local_mock(url: Optional[str] = None) -> bool:
+    """True when JIRA_BASE_URL points at the local Jira-compatible service, not a real Jira site."""
+    from urllib.parse import urlparse
+
+    url = url if url is not None else os.environ.get("JIRA_BASE_URL", "")
+    return bool(url) and (urlparse(url).hostname or "") in LOCAL_HOSTS
+
+
+class JiraWithFallback:
+    """The configured Jira, with the file-backed test project when it cannot be reached.
+
+    Only a connection failure or a timeout falls back (Docker stopped, network down). A refused
+    login or a bad request is a real error and is raised. The fallback is labelled on every
+    result, so a ticket filed locally never pretends it reached Jira.
+    """
+
+    def __init__(self, cloud: JiraCloud, mock: MockJira):
+        self.cloud, self.mock = cloud, mock
+
+    def _call(self, name: str, *args, **kwargs):
+        import requests
+
+        try:
+            return getattr(self.cloud, name)(*args, **kwargs)
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            note = (f"Jira at {self.cloud.base_url} not reachable ({type(exc).__name__}): "
+                    "used the local test project")
+            result = getattr(self.mock, name)(*args, **kwargs)
+            if isinstance(result, list):
+                return [dict(r, backend="mock-fallback", fallback_reason=note) for r in result]
+            return dict(result, backend="mock-fallback", fallback_reason=note)
+
+    def create_issue(self, *args, **kwargs) -> dict:
+        return self._call("create_issue", *args, **kwargs)
+
+    def get_issue(self, *args, **kwargs) -> dict:
+        return self._call("get_issue", *args, **kwargs)
+
+    def search_issues(self, *args, **kwargs) -> list[dict]:
+        return self._call("search_issues", *args, **kwargs)
+
+
 def get_backend(path: Optional[Path] = None):
     """Real Jira when it is configured, the mock otherwise. Same three methods either way."""
     if jira_cloud_configured():
-        return JiraCloud(os.environ["JIRA_BASE_URL"], os.environ["JIRA_EMAIL"],
-                         os.environ["JIRA_API_TOKEN"])
+        cloud = JiraCloud(os.environ["JIRA_BASE_URL"], os.environ["JIRA_EMAIL"],
+                          os.environ["JIRA_API_TOKEN"])
+        return JiraWithFallback(cloud, MockJira(path))
     return MockJira(path)

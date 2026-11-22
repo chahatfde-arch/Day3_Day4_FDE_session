@@ -366,6 +366,32 @@ services:
     # Then set SOAP_WSDL_URL=http://localhost:8001/?wsdl in .env.
     # Add --slow or --flaky to the command to practise timeouts and circuit breakers.
 
+  jira-mock:
+    profiles: ["legacy"]
+    # A local Jira-compatible REST service (infra/jira_mock/server.py): the three Jira Cloud calls the
+    # MCP server makes. Jira itself cannot run on a laptop. Standard library only, so it reuses the
+    # SOAP image's Python and needs no build of its own. The workbench labels it "Local", never "Live".
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+      args:
+        EXTRAS: "integrations"
+    image: creditlens-soap:local
+    container_name: creditlens-jira-mock
+    command: ["python", "/jira/server.py", "--host", "0.0.0.0", "--port", "8090", "--store", "/data/jira_local.json"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./jira_mock:/jira:ro
+      - ../data/cache:/data
+    restart: unless-stopped
+    # Then set JIRA_BASE_URL=http://localhost:8090 in .env, and JIRA_EMAIL and JIRA_API_TOKEN to anything.
+
 volumes:
   sqlserver-data:
   langfuse-postgres-data:

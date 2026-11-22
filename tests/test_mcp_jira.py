@@ -43,3 +43,18 @@ def test_client_over_stdio_when_mcp_is_installed(tmp_path):
         pytest.skip(f"stdio transport unavailable here: {e}")
     b = file_ticket("A010", "5.2", summary="group exposure", jira_path=path, transport="stdio")
     assert a["key"] == b["key"]
+    assert a["transport"] == b["transport"] == "stdio"
+
+
+@pytest.mark.slow
+def test_the_handshake_lists_three_tools_and_no_delete(tmp_path):
+    pytest.importorskip("mcp")
+    from creditlens.mcp_jira.client import inspect_server
+    try:
+        server = inspect_server(str(tmp_path / "jira.json"))
+    except Exception as e:  # noqa: BLE001  spawning a child process can fail in locked-down CI
+        pytest.skip(f"stdio transport unavailable here: {e}")
+    assert server["server"] == "creditlens-jira" and server["protocol_version"]
+    names = {t["name"] for t in server["tools"]}
+    assert names == {"create_issue", "get_issue", "search_issues"}
+    assert not any("delete" in n for n in names)

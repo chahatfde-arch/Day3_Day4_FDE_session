@@ -53,6 +53,7 @@ print("working folder:", Path.cwd())
 import os
 os.environ["LLM_OFFLINE"] = "1"   # today we run offline: same numbers for everyone, no API key needed
 os.environ["CREDITLENS_JIRA_PATH"] = str(Path("data/cache/jira_session4.json"))   # a practice Jira, not the real one
+os.environ["JIRA_BASE_URL"] = ""   # always the practice Jira here, even if .env points at a Jira service
 print("offline mode:", os.environ["LLM_OFFLINE"] == "1")
 
 # %% [markdown]
@@ -220,18 +221,40 @@ if core.backend == "oracle":   # with Docker: does the real system agree with ou
 # team, not something to paper over in the adapter.
 
 # %% [markdown]
-# ## Level 7. Idempotent writes
+# ## Level 7. Idempotent writes, through MCP
 # Reading twice is harmless. **Writing twice is not.** Agents retry and graphs resume, so every write needs
-# a key that makes the second attempt do nothing. Ours is `application:rule`. File Rohan's exception
-# ticket twice, into a practice Jira file.
+# a key that makes the second attempt do nothing. Ours is `application:rule`.
+#
+# Jira sits behind an **MCP server** (Model Context Protocol). An MCP server is a small program that offers
+# typed tools over a standard protocol, so any agent, or Claude Desktop, can use it without custom code.
+# Our client starts it as a child process and speaks JSON-RPC over its standard input and output: the
+# **stdio** transport. First the handshake: ask the server who it is and which tools it offers.
 
 # %%
-from creditlens.mcp_jira.client import file_ticket, idempotency_key
+from creditlens.mcp_jira.client import file_ticket, idempotency_key, inspect_server
 
+server = inspect_server()      # start the server, shake hands, list its tools, stop it
+print(f"server {server['server']} {server['version']} · protocol {server['protocol_version']} · started with: {server['command']}")
+print("instructions:", server["instructions"][:96], "...")
+for tool in server["tools"]:
+    print(f"  tool {tool['name']:<14} {', '.join(tool['arguments'])}")
+print("no delete tool: the agent cannot remove a ticket, whatever its prompt says")
+
+# %% [markdown]
+# Now file Rohan's exception ticket twice, **through the protocol**, into a practice Jira file. Each call
+# starts the server, calls its `create_issue` tool and stops it: about a second each.
+
+# %%
 Path(os.environ["CREDITLENS_JIRA_PATH"]).unlink(missing_ok=True)
 for attempt in (1, 2):
-    t = file_ticket("A901", "5.2", summary="Group exposure over the rule 5.2 limit", transport="inprocess")
-    print(f"attempt {attempt}: key={t['key']} created={t.get('created')} idempotency_key={idempotency_key('A901', '5.2')}")
+    t = file_ticket("A901", "5.2", summary="Group exposure over the rule 5.2 limit", transport="stdio")
+    print(f"attempt {attempt}: key={t['key']} created={t.get('created')} idempotency_key={idempotency_key('A901', '5.2')} transport={t['transport']}")
+
+# %% [markdown]
+# `transport=stdio` means the ticket went through the MCP server. If the server cannot start, the client
+# files the ticket in process and says so (`transport=inprocess`, with a `transport_note`): the agent never
+# fails because a pipe did. The workbench files its tickets the same way, and Claude Desktop could start
+# the same server with `python -m creditlens.mcp_jira`.
 
 # %% [markdown]
 # ## Level 8. A new channel: Amaira signs from Slack

@@ -78,6 +78,22 @@ python -m creditlens.agents.run A001 --user U05 --slack                # drafts 
 The MCP server uses the REST v3 API and stores the idempotency key as a label, so a re-run finds the
 existing ticket. Without the variables, the mock in `data/cache/jira.json` behaves identically.
 
+**No Jira site? Run the local Jira-compatible service.** Jira itself cannot run on a laptop, so
+`infra/jira_mock/server.py` answers the same three REST calls (create, get, search) over HTTP with
+Basic auth. It accepts any email and token, and the workbench labels it "Local", never "Live".
+
+```
+docker compose -f infra/docker-compose.yml --profile legacy up -d jira-mock
+# .env
+JIRA_BASE_URL=http://localhost:8090
+JIRA_EMAIL=anything@example.com
+JIRA_API_TOKEN=anything
+```
+
+If the service is stopped, tickets fall back to the file-backed test project and each one says so
+(`backend: mock-fallback`). Notebook 05b always uses its own practice Jira, and the tests always use
+the file mock, whatever `.env` says.
+
 ## The end-to-end run
 
 One application flows through Oracle, SOAP, the agents and the approval. In Langfuse it is one trace

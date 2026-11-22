@@ -393,12 +393,16 @@ def tickets(app_id: str, w: Who):
     failed = sorted(c["rule_id"] for c in r["evidence"]["checks"] if not c["passed"])
     if not failed:
         return {"tickets": [], "note": "no policy exception, so no ticket"}
-    out = [file_ticket(app_id, rule, transport="inprocess", jira_path=str(JIRA)) for rule in failed]
+    # through the MCP server over stdio, as notebook 05b level 7 does; if it cannot start, in process, and the audit says so
+    transport = os.environ.get("WORKBENCH_MCP_TRANSPORT", "stdio")
+    out = [file_ticket(app_id, rule, transport=transport, jira_path=str(JIRA)) for rule in failed]
     for t in out:
+        via = "through the MCP server (stdio)" if t.get("transport") == "stdio" else "in process" + (
+            f": {t['transport_note']}" if t.get("transport_note") else "")
         audit(app_id, u["user_id"], "ticket_filed" if t.get("created") else "ticket_already_filed",
-              f"{t.get('key')} (idempotency key {t.get('idempotency_key')})")
+              f"{t.get('key')} (idempotency key {t.get('idempotency_key')}), {via}")
     r["tickets"] = [{"key": t.get("key"), "created": t.get("created"), "idempotency_key": t.get("idempotency_key"),
-                     "summary": t.get("summary")} for t in out]
+                     "summary": t.get("summary"), "transport": t.get("transport")} for t in out]
     return {"tickets": r["tickets"], "audit": audit_events(app_id)}
 
 
@@ -441,7 +445,9 @@ def memory():
 def systems():
     import shutil
     import subprocess
-    out = {"oracle": CoreBankingAdapter().backend, "soap_breaker": SOAP.breaker.state, "containers": []}
+    from creditlens.mcp_jira.backend import jira_cloud_configured, jira_is_local_mock
+    jira = ("local" if jira_is_local_mock() else "cloud") if jira_cloud_configured() else "test-project"
+    out = {"oracle": CoreBankingAdapter().backend, "soap_breaker": SOAP.breaker.state, "jira": jira, "containers": []}
     if shutil.which("docker"):
         try:
             p = subprocess.run(["docker", "ps", "--format", "{{.Names}}\t{{.Status}}"], capture_output=True, text=True, timeout=8)

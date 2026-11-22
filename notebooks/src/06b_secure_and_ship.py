@@ -328,18 +328,3 @@ tick("runs outside a laptop", "multi-stage image, non-root user, health check; o
 for condition, evidence in CHECKLIST.items():
     print(f"[x] {condition:30s} {evidence}")
 print(f"\n{len(CHECKLIST)} of 9 conditions met, each with printed evidence.")
-
-# %% [markdown]
-# ## From zero to hero: shipping an agent a bank will run
-# 1. Ask each stakeholder for their condition, and keep a checklist with evidence.
-# 2. Replace stubs with real models, registered, compared with a baseline.
-# 3. Write every assumption down; each one is a conversation with the risk officer.
-# 4. Measure fairness, and show the gaps.
-# 5. Put access control in the query, never in the screen.
-# 6. Measure your guardrails like a model: a test set, a score, the leaks.
-# 7. Keep secrets out of code, and check it automatically.
-# 8. Gate every change on evaluations, including the agent's own exam.
-# 9. Ship a small, non-root container with a health check; expose only the API.
-#
-# ## Exit ticket
-# One thing learned, one open question. Next: notebook 07b, running it and keeping it working.
