@@ -257,6 +257,77 @@ for attempt in (1, 2):
 # the same server with `python -m creditlens.mcp_jira`.
 
 # %% [markdown]
+# ### Under the hood: MCP end to end
+# What `file_ticket` just did, step by step. Nothing here is magic: MCP is **JSON messages, one per line, over a pipe**.
+#
+# | Step | What happens | Where it lives |
+# |---|---|---|
+# | 1 | The agent finds a failed rule and calls `file_ticket("A901", "5.2")` | `src/creditlens/mcp_jira/client.py`, `file_ticket` |
+# | 2 | The client starts the server as a child process: `python -m creditlens.mcp_jira` | `client.py`, `_server_command`; the server starts in `src/creditlens/mcp_jira/__main__.py` |
+# | 3 | `initialize`: the handshake. Both sides agree a protocol version; the server says its name and its instructions | the MCP Python SDK (`pip install mcp`), on both sides |
+# | 4 | `tools/list`: the server describes its three tools and the arguments each takes | `src/creditlens/mcp_jira/server.py`, the `@server.tool` functions |
+# | 5 | `tools/call create_issue`: the client sends the arguments, the server runs the tool | `server.py`, then `get_backend()` in `backend.py` |
+# | 6 | The backend writes the ticket: a practice file here; the local Jira service or Jira Cloud when `.env` says so | `src/creditlens/mcp_jira/backend.py`: `MockJira`, `JiraCloud` |
+# | 7 | The reply travels back; the client adds `transport=stdio` and stops the server | `client.py`, `call_tool_over_stdio` |
+#
+# The next cell plays steps 2 to 7 by hand, with no SDK on our side, so you can see every message.
+
+# %%
+import json
+import subprocess
+import sys
+import tempfile
+
+# A fresh practice file for this demo only, so the first call really creates a ticket.
+wire_env = dict(os.environ, CREDITLENS_JIRA_PATH=str(Path(tempfile.mkdtemp()) / "jira_wire.json"))
+server = subprocess.Popen([sys.executable, "-m", "creditlens.mcp_jira"],      # step 2: exactly what file_ticket starts
+                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                          text=True, encoding="utf-8", env=wire_env)
+
+
+def send(message, show=None):
+    """Write one JSON message to the server's standard input, and read its reply from its standard output."""
+    name = message["method"] + (" " + message["params"]["name"] if message["method"] == "tools/call" else "")
+    print(f"client -> server   {name}")
+    server.stdin.write(json.dumps(message) + "\n")
+    server.stdin.flush()
+    if "id" not in message:
+        print("                   (a notification: no reply)")
+        return None
+    reply = json.loads(server.stdout.readline())
+    print(f"server -> client   {show(reply['result'])}")
+    return reply
+
+
+send({"jsonrpc": "2.0", "id": 1, "method": "initialize",                       # step 3
+      "params": {"protocolVersion": "2026-07-28", "capabilities": {}, "clientInfo": {"name": "notebook-05b", "version": "1.0"}}},
+     lambda r: f"I am {r['serverInfo']['name']} {r['serverInfo']['version']}; we speak protocol {r['protocolVersion']}")
+send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"},                      # step 4
+     lambda r: "my tools: " + "; ".join(f"{t['name']}({', '.join(t['inputSchema']['properties'])})" for t in r["tools"]))
+ticket = {"project_key": "CREDIT", "summary": "Group exposure over the rule 5.2 limit", "idempotency_key": "A901:5.2"}
+for n in (3, 4):                                                               # steps 5 to 7, twice
+    send({"jsonrpc": "2.0", "id": n, "method": "tools/call", "params": {"name": "create_issue", "arguments": ticket}},
+         lambda r: (lambda t: f"{t['key']} created={t['created']} backend={t['backend']}")(json.loads(r["content"][0]["text"])))
+server.stdin.close()
+server.wait(timeout=10)
+
+print("\nOne message exactly as it travels, a single line of JSON:")
+print(json.dumps({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "create_issue", "arguments": ticket}}))
+
+# %% [markdown]
+# **What you saw.** A handshake, a menu of three tools, then the same `create_issue` call twice: `created=True`,
+# then `created=False`. The idempotency key is checked in the backend, so it holds whichever client calls. Claude
+# Desktop or another team's agent could send these exact lines and get the same answers. One detail: this hand-written client uses the classic handshake, `initialize`, so the server answers with the
+# newest classic version, 2025-11-25. The SDK client in the handshake cell above first asks `server/discover`, the newer
+# way from the 2026-07-28 revision, which is why it printed 2026-07-28. Same server, two ways in.
+#
+# **Why MCP, and the other options.** We could call Jira's REST API straight from the agent: simpler at first, but
+# every agent then re-implements the login, the retries and the rule that nobody may delete a ticket. With MCP, those
+# live once, in one small server, and every agent reuses them. The other transport, **Streamable HTTP**, runs the same
+# server somewhere else, so many agents share one copy. stdio is the right choice for one laptop.
+
+# %% [markdown]
 # ## Level 8. A new channel: Amaira signs from Slack
 # Slack connects out to our laptop over a websocket (Socket Mode), so no public address is needed. The
 # message carries the proposal and two buttons, and a click calls **the same signing path** as the

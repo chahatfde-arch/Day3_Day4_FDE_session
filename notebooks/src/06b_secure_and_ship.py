@@ -59,11 +59,40 @@ def tick(condition, evidence):
     print(f"[x] {condition}: {evidence}")
 
 # %% [markdown]
-# ## Level 1. A real risk model
+# ## Level 1. A real risk model: replace the stub, compare with a baseline, register the champion
+# The Chief Risk Officer's condition has three parts, and each one gets its own evidence:
+#
+# 1. **Replace the stub.** Until now the agent's risk tool answered with a rule-based stub: a few
+#    hand-written rules, no data behind them.
+# 2. **Compare with a baseline.** A strong model is not enough; it must beat something simple, on the same
+#    loans it never saw in training. We compare three: the stub (the floor), a logistic regression (the
+#    baseline) and gradient boosting (the challenger).
+# 3. **Register it.** The winner goes into the MLflow model registry as the **champion**, so serving,
+#    the audit trail and a rollback all point at one named version.
+#
 # Good Bank has no loan history of its own yet. So, as an FDE does when a client has no labels, we
 # bootstrap from a **real public loan book**: 25,000 US small-business loans (SBA 7(a), Kaggle,
-# CC BY-SA 4.0) with a flag for loans that went bad. Two models compete: a simple baseline and a stronger
-# challenger. The better one is registered in MLflow as the **champion**.
+# CC BY-SA 4.0) with a flag for loans that went bad.
+
+# %% [markdown]
+# ### Before: what the stub says about Rohan and Rahul
+# This is what the agent's risk tool returns on a clean checkout, before anybody has trained anything.
+# Read the drivers: every number comes from a hand-written rule.
+
+# %%
+from creditlens.ml.serving import features_for_application, stub_score
+from creditlens.scenarios.story import story_db_url
+
+BEFORE = {}
+for app in ("A901", "A902"):
+    rs = stub_score(features_for_application(app, db_url=story_db_url()))
+    BEFORE[app] = rs
+    print(app, f"PD {rs.probability_of_default:.2%}", rs.risk_band, "| model", rs.model_name)
+    for d in rs.top_drivers:
+        print("    -", d)
+
+# %% [markdown]
+# ### The data the real model learns from
 
 # %%
 import pandas as pd
@@ -73,26 +102,86 @@ sba = pd.read_csv("data/real/sba_loans.csv")
 X, y = sba_features(sba)
 print(X.shape[0], "loans,", X.shape[1], "features, default rate", round(float(y.mean()), 3))
 
+# %% [markdown]
+# ### Train, with every run tracked in MLflow
+# One call scores the stub on a held-out quarter of the loans, then trains the baseline and the challenger
+# on the rest and scores them on the same held-out loans. All three runs go to MLflow. The one with the
+# best AUC is registered as the champion. `quick=True` uses 6,000 loans so it finishes in about a minute.
+
 # %%
-!python -m creditlens.ml.train --quick
+import logging
+import os
+os.environ["MLFLOW_ENABLE_ARTIFACTS_PROGRESS_BAR"] = "false"   # keep the output readable
+os.environ["MLFLOW_DISABLE_AGENT_HINT"] = "1"
+import mlflow
+logging.getLogger("mlflow").setLevel(logging.ERROR)            # after the import: MLflow sets its own level
+
+from creditlens.ml.train import train
+result = train(quick=True)
 
 # %% [markdown]
-# Read the output like a risk officer. **AUC** says how well the model ranks good loans above bad ones
-# (0.5 is a coin toss, 1.0 is perfect). **Brier** says how well its probabilities are calibrated (lower is
-# better). If MLflow prints that it could not log the model artifact, the model is still saved to
-# `data/cache/model.joblib` and serving reads it from there; the registry entry and the champion alias are
-# still written.
+# ### Compared with a baseline, read back from MLflow
+# We do not trust our memory or the printout: the comparison below is read back from the MLflow tracking
+# store, the same table the MLflow UI shows. **AUC** says how well a model ranks bad loans above good ones
+# (0.5 is a coin toss, 1.0 is perfect). **Brier** says how close its probabilities are to what happened
+# (lower is better). The champion must beat the baseline on both, and the baseline must beat the stub.
+
+# %%
+import mlflow
+
+runs = mlflow.search_runs(experiment_names=["creditlens-risk"], max_results=3, order_by=["start_time DESC"])
+table = runs[["tags.mlflow.runName", "metrics.auc", "metrics.pr_auc", "metrics.brier"]]
+table.columns = ["model", "AUC", "PR-AUC", "Brier"]
+print(table.sort_values("AUC").round(4).to_string(index=False))
+
+score_of = {row.model: row for row in table.itertuples()}
+stub, base, chal = score_of["stub_rules"], score_of["baseline_logreg"], score_of["challenger_gbm"]
+print()
+print("baseline beats the stub:       AUC", f"{stub.AUC:.4f} -> {base.AUC:.4f}", "| Brier", f"{stub.Brier:.4f} -> {base.Brier:.4f}")
+print("challenger beats the baseline: AUC", f"{base.AUC:.4f} -> {chal.AUC:.4f}", "| Brier", f"{base.Brier:.4f} -> {chal.Brier:.4f}")
+assert chal.AUC > base.AUC > stub.AUC and chal.Brier < base.Brier, "the challenger has not earned promotion"
+print("champion:", result["champion"])
+
+# %% [markdown]
+# Look at the stub's AUC first: **below 0.5**. On real loans its hand-written rules rank risk slightly
+# *worse* than a coin toss. Nobody noticed, because nobody had measured it. That is the reason for a
+# baseline: every model, and every set of rules, is measured on the same held-out loans before it is trusted.
 #
 # **Ask:** the challenger's AUC is very high. What would you check before you believed it?
+# (Hint: leakage. Is any feature only known after the loan went bad?)
+
+# %% [markdown]
+# ### Registered: the champion in the model registry
+# A model is not a file on someone's laptop. It is a numbered version in the registry with an alias,
+# `champion`, that serving follows. Rolling back is moving the alias to the previous version.
+
+# %%
+client = mlflow.MlflowClient()
+champ = client.get_model_version_by_alias("creditlens-risk", "champion")
+champ_run = client.get_run(champ.run_id)
+versions = sorted(client.search_model_versions("name='creditlens-risk'"), key=lambda v: int(v.version))
+print("registered model: creditlens-risk,", len(versions), "versions")
+print("alias 'champion' -> version", champ.version, "| trained in run", champ_run.data.tags["mlflow.runName"],
+      "| AUC", round(champ_run.data.metrics["auc"], 4))
+print("previous version, for a rollback:", versions[-2].version if len(versions) > 1 else "none yet")
+
+from creditlens.ml.serving import load_champion
+served = load_champion(refresh=True)
+print("serving loads:", served["source"], served["name"], "v" + served["version"])
+
+# %% [markdown]
+# ### After: the same two applications, scored by the champion
 
 # %%
 from creditlens.ml.serving import score_application
-from creditlens.scenarios.story import story_db_url
 
 for app in ("A901", "A902"):
-    rs = score_application(app, db_url=story_db_url())
-    print(app, f"PD {rs.probability_of_default:.2%}", rs.risk_band, "| model", rs.model_name, "v" + rs.model_version)
-tick("a real risk model", "creditlens-risk registered as champion; Rohan and Rahul scored by it")
+    before, after = BEFORE[app], score_application(app, db_url=story_db_url())
+    print(f"{app}  before: PD {before.probability_of_default:.2%} {before.risk_band} ({before.model_name})"
+          f"  ->  after: PD {after.probability_of_default:.2%} {after.risk_band} ({after.model_name} v{after.model_version})")
+tick("a real risk model",
+     f"stub replaced; {result['champion']} (AUC {chal.AUC:.3f}) beat the baseline ({base.AUC:.3f}) and the stub "
+     f"({stub.AUC:.3f}); registered as creditlens-risk v{champ.version} 'champion'")
 
 # %% [markdown]
 # ## Level 2. Write the assumptions down
@@ -108,9 +197,10 @@ tick("assumptions written down", f"{len(ASSUMPTIONS)} assumptions printed for th
 
 # %% [markdown]
 # ## Level 3. Fairness
-# Geography is **not** a feature of the model, on purpose. But a model can still learn it through other
-# columns. So we measure, by segment, how often the model calls a loan high risk. A large gap between
-# segments with similar real default rates is the signal to investigate.
+# The **state** a business is in is not a feature of the model, on purpose; whether it is **urban or rural** is
+# one. A model can still learn the state through other columns, and it uses urban or rural directly. So we
+# measure, by segment, how often the model calls a loan high risk. A large gap between segments with similar
+# real default rates is the signal to investigate, and the risk officer decides what is acceptable.
 
 # %%
 import json
@@ -328,3 +418,18 @@ tick("runs outside a laptop", "multi-stage image, non-root user, health check; o
 for condition, evidence in CHECKLIST.items():
     print(f"[x] {condition:30s} {evidence}")
 print(f"\n{len(CHECKLIST)} of 9 conditions met, each with printed evidence.")
+
+# %% [markdown]
+# ## From zero to hero: shipping an agent a bank will run
+# 1. Ask each stakeholder for their condition, and keep a checklist with evidence.
+# 2. Replace stubs with real models, registered, compared with a baseline.
+# 3. Write every assumption down; each one is a conversation with the risk officer.
+# 4. Measure fairness, and show the gaps.
+# 5. Put access control in the query, never in the screen.
+# 6. Measure your guardrails like a model: a test set, a score, the leaks.
+# 7. Keep secrets out of code, and check it automatically.
+# 8. Gate every change on evaluations, including the agent's own exam.
+# 9. Ship a small, non-root container with a health check; expose only the API.
+#
+# ## Exit ticket
+# One thing learned, one open question. Next: notebook 07b, running it and keeping it working.

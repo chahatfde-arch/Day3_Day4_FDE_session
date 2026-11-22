@@ -242,9 +242,9 @@ def fairness_report(y_true: pd.Series, proba: np.ndarray, segments: pd.DataFrame
 
     return {
         "threshold": threshold,
-        "note": ("State and BankState are not model features. Any gap below comes from the "
-                 "other features correlating with geography, which is exactly what a "
-                 "fairness check is for."),
+        "note": ("State and BankState are not model features, so a gap by State comes from other "
+                 "features correlating with geography. UrbanRural is a model feature, so a gap by "
+                 "UrbanRural is partly the model using it directly. Both are what a fairness check is for."),
         "rows": rows,
         "largest_gaps": gaps,
     }
@@ -255,7 +255,9 @@ def _print_fairness(report: dict[str, Any]) -> None:
         print(f"Fairness, {column}: the model calls {gap['highest_share']:.0%} of "
               f"{gap['highest']} loans high risk and {gap['lowest_share']:.0%} of "
               f"{gap['lowest']} loans high risk, a gap of {gap['gap']:.0%}. "
-              "Geography is not a feature, so this gap comes from the other columns.")
+              + (f"{column} is itself a model feature, so the model uses it directly: agree with the "
+                 "risk officer whether it should." if column in MODEL_FEATURES
+                 else f"{column} is not a model feature, so this gap comes from the other columns."))
 
 
 # ---------------------------------------------------------------------------

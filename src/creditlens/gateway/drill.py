@@ -94,7 +94,9 @@ def run(n: int = 5, use_cache: bool = True, verbose: bool = True) -> dict:
         print(f"\n{'#':>2}  {'model':28s} {'cached':6s} {'lat s':>6s}  answer")
         print("-" * 96)
         for r in rows:
-            shown = r["error"] or r["answer"] or "offline-stub"
+            # An empty answer from a real model is not the offline stub: say which it was.
+            shown = r["error"] or r["answer"] or ("offline-stub" if r["model"] == "offline-stub"
+                                                  else "(empty answer: the model returned no text)")
             print(f"{r['n']:>2}  {r['model']:28s} {str(r['cached']):6s} {r['latency_s']:>6.3f}  {shown}")
         print("-" * 96)
         print(f"calls {summary['calls']}  cache hits {summary['cache_hits']}  "
