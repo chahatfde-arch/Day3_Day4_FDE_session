@@ -60,6 +60,6 @@ def test_a_stopped_service_falls_back_to_the_test_project_and_says_so(tmp_path):
 
 
 def test_only_local_addresses_count_as_the_local_mock():
-    assert jira_is_local_mock("http://localhost:8090")
+    assert jira_is_local_mock("http://localhost:8092")
     assert not jira_is_local_mock("https://goodbank.atlassian.net")
     assert not jira_is_local_mock("")

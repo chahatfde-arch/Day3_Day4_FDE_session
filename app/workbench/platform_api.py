@@ -42,6 +42,7 @@ JOB_ROLES = {"head_of_credit", "auditor"}
 SERVICES = [
     ("creditlens-oracle", "legacy", "Oracle core banking", "notebook 05b, reviews"),
     ("creditlens-soap", "legacy", "SOAP repayment service", "notebook 05b, reviews"),
+    ("creditlens-jira-mock", "legacy", "Local Jira-compatible service (port 8092)", "exception tickets, when JIRA_BASE_URL points at it"),
     ("creditlens-mlflow", "ml", "MLflow model registry", "notebooks 06b and 07b"),
     ("creditlens-api", "core", "CreditLens API (our image)", "integrations, the cloud target"),
     ("creditlens-keycloak", "security", "Keycloak identity provider", "notebook 06"),

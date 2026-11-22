@@ -19,9 +19,9 @@ more), keeps issues in one JSON file, and has no workflow beyond "To Do". It is 
 and the workbench labels it "Local", never "Live".
 
 Run it:
-    python infra/jira_mock/server.py --port 8090 --store data/cache/jira_local.json
+    python infra/jira_mock/server.py --port 8092 --store data/cache/jira_local.json
     docker compose -f infra/docker-compose.yml --profile legacy up -d jira-mock
-Then in .env: JIRA_BASE_URL=http://localhost:8090, JIRA_EMAIL and JIRA_API_TOKEN set to anything.
+Then in .env: JIRA_BASE_URL=http://localhost:8092 (not 8090: the Credit Workbench uses that), JIRA_EMAIL and JIRA_API_TOKEN set to anything.
 
 Standard library only, so it runs in any Python 3.9+ container without installing anything.
 """
@@ -219,7 +219,7 @@ def main() -> None:
     global STORE
     ap = argparse.ArgumentParser(description="A local Jira-compatible service for the CreditLens MCP server")
     ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--port", type=int, default=8090)
+    ap.add_argument("--port", type=int, default=8092)
     ap.add_argument("--store", default="data/cache/jira_local.json")
     a = ap.parse_args()
     STORE = Path(a.store)

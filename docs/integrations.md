@@ -85,7 +85,8 @@ Basic auth. It accepts any email and token, and the workbench labels it "Local",
 ```
 docker compose -f infra/docker-compose.yml --profile legacy up -d jira-mock
 # .env
-JIRA_BASE_URL=http://localhost:8090
+# port 8092, not 8090: the Credit Workbench uses 8090
+JIRA_BASE_URL=http://localhost:8092
 JIRA_EMAIL=anything@example.com
 JIRA_API_TOKEN=anything
 ```

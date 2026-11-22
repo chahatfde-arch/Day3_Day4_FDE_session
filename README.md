@@ -12,14 +12,17 @@ Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an A
 | `notebooks/04b_underwriter_agent.ipynb` | **Day 3, build:** the Underwriter Agent from zero, through seven agent types, prompting, and a LangGraph with a human gate |
 | `notebooks/05_integrations.ipynb` | The bank's legacy systems (reference) |
 | `notebooks/05b_connect_the_agent.ipynb` | **Day 3, connect:** Oracle, SOAP, Jira through MCP and Slack, with timeouts, retries, a circuit breaker, labelled fallbacks and idempotent writes |
+| `notebooks/05b_connect_the_agent_docker.ipynb` | Notebook 05b with the outputs saved from the trainer's run against the real Oracle and SOAP systems in Docker (read it; no Docker needed) |
 | `notebooks/06_mlops_security_deploy.ipynb` | MLOps, security, Docker, continuous integration and the cloud (reference) |
 | `notebooks/06b_secure_and_ship.ipynb` | **Day 4, secure and ship:** a real risk model, its assumptions, fairness, access by region, masking, guardrails, secrets, the evaluation gate and the container |
 | `notebooks/07_evaluate_maintain.ipynb` | Evaluate and maintain: tracing, the eval court, gateway resilience, four incidents (reference) |
 | `notebooks/07b_run_and_maintain.ipynb` | **Day 4, run and maintain:** where the time goes, approver feedback, a calibrated judge, resilience, incidents, a policy change, rollback and the runbook |
 | `notebooks/08_story_scenarios.ipynb` | **Day 4, the hard cases:** six borrowers, one case at a time |
+| `notebooks/09_test_everything.ipynb` | **Day 4, test everything:** every kind of test we met, level by level, then a scoreboard ([how to run the tests](#run-the-tests)) |
 | `app/workbench/` | **The Good Bank Credit Workbench:** the agent inside the credit team's web application, with its platform screens: statement screening, connected systems, model governance, release readiness and monitoring ([how to run it](#run-the-credit-workbench), [walkthrough with screenshots](docs/workbench_walkthrough.html), [the screens](app/workbench/README.md)) |
 | `infra/docker-compose.yml` | The bank's systems as Docker services (Oracle, the SOAP service, MLflow, ...) |
 | `src/creditlens/` | The project's code |
+| `tests/` | The automated tests that guard it |
 | `docs/session3_architecture.html` | **The big picture:** the pipeline, the architecture, the flow chart of one credit review, and why the agent is built this way (open in a browser) |
 | `docs/agents.md`, `docs/integrations.md` | Notes for Day 3 |
 | `docs/mlops.md`, `docs/evaluate_and_maintain.md` | Notes for Day 4 |
@@ -45,11 +48,14 @@ python -m creditlens.generators
 python -m creditlens.pipeline --load
 python -m creditlens.scenarios
 python -m creditlens.scenarios.story build
+python -m creditlens.data_real --only sba receipts sop
 
 python -m creditlens.setup_check
 ```
 
 If PowerShell refuses to run `Activate.ps1`, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
+
+`creditlens.data_real` needs internet. It downloads small samples of three real public datasets: the SBA loan book that trains the risk model in notebook 06b, scanned receipts for the extraction check, and the SBA rulebook for the policy search. Without it, notebooks 06, 06b and 07b stop with `FileNotFoundError: data/real/sba_loans.csv`, and the evaluation gate in notebook 09 fails. **Already set up before this line was added?** Run `git pull`, then just this one command.
 
 **Check it works:** start the Credit Workbench (next section). If Rohan's credit review shows a counter-offer of ₹1.50 Cr, your setup is complete.
 
@@ -98,6 +104,22 @@ The [walkthrough with screenshots](docs/workbench_walkthrough.html) goes through
 | *Run credit review* is greyed out | The application has already been decided, or the review assistant is still starting |
 
 More detail: [app/workbench/README.md](app/workbench/README.md).
+
+## Run the tests
+
+Open `notebooks/09_test_everything.ipynb` and run all. It runs every kind of test from Days 1 to 4, level by level, and ends with a scoreboard. Everything is offline: no API key, no Docker. It takes about nine minutes. When the last line says *Green: safe to ship*, every test passed.
+
+From a terminal instead:
+
+```bash
+# Windows (PowerShell)
+$env:LLM_OFFLINE="1"; python -m pytest -m "not slow" -q
+
+# Mac / Linux
+LLM_OFFLINE=1 python -m pytest -m "not slow" -q
+```
+
+`LLM_OFFLINE=1` keeps the tests offline even if you have put an API key in `.env`. The slow tests load a model or start the whole workbench. Run them with `-m slow` in place of `-m "not slow"`.
 
 ## Docker (optional)
 

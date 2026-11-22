@@ -31,6 +31,12 @@ os.chdir(REPO)
 # Offline unless WORKBENCH_LIVE=1. VS Code loads .env (LLM_OFFLINE=0) into its terminals, and a live start-up
 # runs every model call in notebook 04b at LLM_RPM requests a minute: many minutes before a review can run.
 os.environ["LLM_OFFLINE"] = "0" if os.environ.get("WORKBENCH_LIVE") == "1" else "1"
+# Tracing only when live. Offline every model call is the stub, so there is nothing worth a trace, and when Langfuse
+# is slow or unreachable its exporter fills the terminal with "Failed to export spans batch ...". An empty key wins
+# over .env (config only fills unset variables), so this switches Langfuse off for this process alone.
+if os.environ.get("WORKBENCH_LIVE") != "1":
+    os.environ["LANGFUSE_PUBLIC_KEY"] = os.environ["LANGFUSE_SECRET_KEY"] = ""
+os.environ.setdefault("MLFLOW_DISABLE_AGENT_HINT", "1")      # MLflow's start-up advice is for its own tooling, not this app
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{(REPO / 'creditlens.db').as_posix()}")
 
 import pandas as pd  # noqa: E402
@@ -58,8 +64,10 @@ def code_cells(path: Path) -> list[str]:
 def load_agent() -> None:
     try:
         import types
+        import warnings
         import matplotlib
         matplotlib.use("Agg")
+        warnings.filterwarnings("ignore", message="FigureCanvasAgg is non-interactive")   # 04b's plt.show(): no screen here
         module = types.ModuleType("notebook_04b")          # a real module: @dataclass and pydantic look it up
         sys.modules["notebook_04b"] = module
         ns: dict = module.__dict__
