@@ -7,12 +7,18 @@
       "Action": [
         "sts:GetCallerIdentity",
         "ec2:DescribeInstances",
+        "ec2:DescribeInstanceStatus",
         "ec2:DescribeInstanceTypes",
         "ec2:DescribeImages",
         "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSecurityGroupRules",
         "ec2:DescribeVpcs",
         "ec2:DescribeSubnets",
-        "ec2:DescribeTags"
+        "ec2:DescribeTags",
+        "ec2:DescribeKeyPairs",
+        "ec2:DescribeAddresses",
+        "ec2:DescribeVolumes",
+        "ec2:GetConsoleOutput"
       ],
       "Resource": "*"
     },
@@ -26,13 +32,20 @@
       "Resource": "arn:aws:ssm:*::parameter/aws/service/ami-amazon-linux-latest/*"
     },
     {
-      "Sid": "PushAndPullOneEcrRepository",
+      "Sid": "EcrRepositoriesNamedCreditlens",
       "Effect": "Allow",
       "Action": [
+        "ecr:CreateRepository",
+        "ecr:DeleteRepository",
+        "ecr:TagResource",
+        "ecr:ListTagsForResource",
+        "ecr:PutImageScanningConfiguration",
         "ecr:BatchCheckLayerAvailability",
         "ecr:BatchGetImage",
+        "ecr:BatchDeleteImage",
         "ecr:CompleteLayerUpload",
         "ecr:DescribeImages",
+        "ecr:DescribeImageScanFindings",
         "ecr:DescribeRepositories",
         "ecr:GetDownloadUrlForLayer",
         "ecr:InitiateLayerUpload",
@@ -49,21 +62,25 @@
       "Resource": "*"
     },
     {
-      "Sid": "ManageOnlyResourcesTaggedAsThisProject",
+      "Sid": "LaunchMayUseSharedResources",
       "Effect": "Allow",
-      "Action": [
-        "ec2:RunInstances",
-        "ec2:StartInstances",
-        "ec2:StopInstances",
-        "ec2:TerminateInstances",
-        "ec2:CreateTags",
-        "ec2:DeleteTags",
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:RevokeSecurityGroupIngress",
-        "ec2:CreateSecurityGroup",
-        "ec2:DeleteSecurityGroup"
+      "Action": "ec2:RunInstances",
+      "Resource": [
+        "arn:aws:ec2:*::image/*",
+        "arn:aws:ec2:*:*:subnet/*",
+        "arn:aws:ec2:*:*:network-interface/*",
+        "arn:aws:ec2:*:*:security-group/*",
+        "arn:aws:ec2:*:*:key-pair/*"
+      ]
+    },
+    {
+      "Sid": "LaunchOnlyInstancesAndDisksTaggedForThisProject",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": [
+        "arn:aws:ec2:*:*:instance/*",
+        "arn:aws:ec2:*:*:volume/*"
       ],
-      "Resource": "*",
       "Condition": {
         "StringEquals": {
           "aws:RequestTag/project": "creditlens"
@@ -71,12 +88,45 @@
       }
     },
     {
-      "Sid": "ActOnAlreadyTaggedResources",
+      "Sid": "CreateSecurityGroupsInsideTheVpc",
+      "Effect": "Allow",
+      "Action": "ec2:CreateSecurityGroup",
+      "Resource": "arn:aws:ec2:*:*:vpc/*"
+    },
+    {
+      "Sid": "CreateOnlySecurityGroupsTaggedForThisProject",
+      "Effect": "Allow",
+      "Action": "ec2:CreateSecurityGroup",
+      "Resource": "arn:aws:ec2:*:*:security-group/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/project": "creditlens"
+        }
+      }
+    },
+    {
+      "Sid": "TagOnlyWhileCreating",
+      "Effect": "Allow",
+      "Action": "ec2:CreateTags",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "ec2:CreateAction": [
+            "RunInstances",
+            "CreateSecurityGroup"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ActOnInstancesAndDisksTaggedForThisProject",
       "Effect": "Allow",
       "Action": [
         "ec2:StartInstances",
         "ec2:StopInstances",
         "ec2:TerminateInstances",
+        "ec2:DeleteVolume",
+        "ec2:ReleaseAddress",
         "ec2:DeleteTags"
       ],
       "Resource": "*",
@@ -85,6 +135,39 @@
           "aws:ResourceTag/project": "creditlens"
         }
       }
+    },
+    {
+      "Sid": "ChangeOnlySecurityGroupsTaggedForThisProject",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:DeleteSecurityGroup"
+      ],
+      "Resource": "arn:aws:ec2:*:*:security-group/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/project": "creditlens"
+        }
+      }
+    },
+    {
+      "Sid": "RulesInsideThoseSecurityGroups",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupIngress"
+      ],
+      "Resource": "arn:aws:ec2:*:*:security-group-rule/*"
+    },
+    {
+      "Sid": "KeyPairsNamedCreditlens",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateKeyPair",
+        "ec2:DeleteKeyPair"
+      ],
+      "Resource": "arn:aws:ec2:*:*:key-pair/creditlens*"
     },
     {
       "Sid": "OneS3BucketOnly",
@@ -166,12 +249,11 @@
       }
     },
     {
-      "Sid": "NeverTouchAnythingUntagged",
+      "Sid": "NeverTerminateAnythingUntagged",
       "Effect": "Deny",
       "Action": [
         "ec2:TerminateInstances",
-        "lambda:DeleteFunction",
-        "s3:DeleteBucket"
+        "lambda:DeleteFunction"
       ],
       "Resource": "*",
       "Condition": {

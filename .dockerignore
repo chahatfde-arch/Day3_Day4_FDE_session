@@ -1,0 +1,19 @@
+# Never sent to a Docker build: secrets, your data, caches and local databases.
+# The images copy only what they name (infra/Dockerfile, infra/Dockerfile.workbench); this is the second lock.
+.env
+.env.*
+!.env.example
+.git
+.venv
+venv
+data/
+*.db
+mlruns
+mlruns.db
+docs/client/
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.ipynb_checkpoints
+**/.ipynb_checkpoints

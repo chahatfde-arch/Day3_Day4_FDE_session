@@ -479,5 +479,8 @@ def http_error(_, exc: HTTPException):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("WORKBENCH_PORT", "8090"))
+    # 127.0.0.1 on a laptop: only you can open it. The container image sets WORKBENCH_HOST=0.0.0.0, because
+    # inside a container 127.0.0.1 cannot be reached from outside (infra/Dockerfile.workbench).
+    host = os.environ.get("WORKBENCH_HOST", "127.0.0.1")
     print(f"Good Bank Credit Workbench on http://localhost:{port}  (the review assistant needs about a minute to start)")
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
+    uvicorn.run(app, host=host, port=port, log_level="warning")

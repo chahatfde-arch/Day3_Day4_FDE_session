@@ -4,6 +4,8 @@ Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an A
 
 **The story.** Amaira Dey, Head of Credit at Good Bank, asks for help with her queue: *"Do the first four jobs for me. Never the fifth."* The Underwriter Agent gathers the evidence, checks every policy rule, weighs the options and writes a review note. Then it stops, because only Amaira signs.
 
+**Start here: [RUN_END_TO_END.md](RUN_END_TO_END.md).** Step by step: setup, every key (all optional), every Docker service, each notebook in order with what you should see, the Credit Workbench, the tests, and hosting the workbench on AWS.
+
 ## What is here
 
 | | |
@@ -21,6 +23,7 @@ Days 1 and 2 made Good Bank's data trustworthy and searchable. Day 3 builds an A
 | `notebooks/09_test_everything.ipynb` | **Day 4, test everything:** every kind of test we met, level by level, then a scoreboard ([how to run the tests](#run-the-tests)) |
 | `app/workbench/` | **The Good Bank Credit Workbench:** the agent inside the credit team's web application, with its platform screens: statement screening, connected systems, model governance, release readiness and monitoring ([how to run it](#run-the-credit-workbench), [walkthrough with screenshots](docs/workbench_walkthrough.html), [the screens](app/workbench/README.md)) |
 | `infra/docker-compose.yml` | The bank's systems as Docker services (Oracle, the SOAP service, MLflow, ...) |
+| `infra/Dockerfile.workbench`, `infra/aws/` | The Credit Workbench as one container image, and how to push it to Amazon ECR and host it on EC2 ([workbench on AWS](infra/aws/workbench_on_aws.md)) |
 | `src/creditlens/` | The project's code |
 | `tests/` | The automated tests that guard it |
 | `docs/session3_architecture.html` | **The big picture:** the pipeline, the architecture, the flow chart of one credit review, and why the agent is built this way (open in a browser) |

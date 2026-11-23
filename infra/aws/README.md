@@ -13,6 +13,10 @@ region. The budget alarm in step 1 is what protects you when something is not fr
 with the SQLite database baked in or mounted. Nothing else from the compose file goes
 to AWS. Langfuse stays on Langfuse Cloud's free tier or on your laptop.
 
+**Want to host the Credit Workbench instead (the web app, with its demo data inside)?**
+Follow [workbench_on_aws.md](workbench_on_aws.md). It uses steps 1 and 2 of this page,
+then gives every command for the workbench.
+
 ---
 
 ## Step 1. A budget alarm, before anything else
@@ -40,12 +44,13 @@ day-to-day work, and turn on MFA for it today.
 3. **Permissions** → **Attach policies directly** → **Create policy** → **JSON**, and
    paste [`policy.json`](policy.json) from this folder. Name it
    `creditlens-deploy-policy`.
-4. Read what that policy allows before you attach it. It can push to an ECR repository
-   whose name starts with `creditlens`, manage resources tagged `project=creditlens`,
-   use S3 buckets named `creditlens-*`, and write logs to `/aws/*/creditlens*`. It
-   explicitly *denies* terminating, deleting or emptying anything that is not tagged
-   `project=creditlens`. That is what "least privilege" means in practice: the
-   blast radius of a mistake is one project.
+4. Read what that policy allows before you attach it. It can create, push to and delete
+   ECR repositories whose names start with `creditlens`, launch servers and create
+   security groups only when they carry the tag `project=creditlens`, change or delete
+   only resources with that tag, use S3 buckets named `creditlens-*`, and write logs to
+   `/aws/*/creditlens*`. It explicitly *denies* terminating a server or deleting a
+   Lambda function that is not tagged `project=creditlens`. That is what "least
+   privilege" means in practice: the blast radius of a mistake is one project.
 5. Create an access key for the user, choose **Command Line Interface**, and store the
    two values somewhere safe. They are shown once.
 

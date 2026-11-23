@@ -329,18 +329,22 @@ def score_application(application_id: str, db_url: Optional[str] = None) -> Risk
 # ---------------------------------------------------------------------------
 # FastAPI router. Imported lazily so this module works without FastAPI installed.
 # ---------------------------------------------------------------------------
+from pydantic import BaseModel, Field  # noqa: E402  pydantic is a core dependency; FastAPI is not
+
+
+class ScoreRequest(BaseModel):
+    """The body of POST /risk/score. At module level, not inside build_router: with postponed annotations
+    FastAPI resolves the type by name from this module, and a class inside a function cannot be found, which
+    broke /openapi.json and left /docs empty."""
+    application_id: Optional[str] = Field(
+        None, description="Score a Good Bank application straight from the database")
+    features: Optional[dict] = Field(
+        None, description="Or pass model features directly, for what-if questions")
 
 
 def build_router():
     """POST /risk/score with either a feature dict or an application_id."""
     from fastapi import APIRouter, HTTPException
-    from pydantic import BaseModel, Field
-
-    class ScoreRequest(BaseModel):
-        application_id: Optional[str] = Field(
-            None, description="Score a Good Bank application straight from the database")
-        features: Optional[dict] = Field(
-            None, description="Or pass model features directly, for what-if questions")
 
     api = APIRouter(prefix="/risk", tags=["risk"])
 

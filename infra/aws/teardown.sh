@@ -140,14 +140,18 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 5. ECR repository, images and all
+# 5. ECR repositories whose name starts with creditlens (creditlens-api, creditlens-workbench), images and all
 # ---------------------------------------------------------------------------
 echo "[5/7] ECR"
-if aws ecr describe-repositories --region "$REGION" --repository-names "$ECR_REPO" >/dev/null 2>&1; then
-  run "delete ECR repository $ECR_REPO and every image in it" \
-    aws ecr delete-repository --region "$REGION" --repository-name "$ECR_REPO" --force
+REPOS="$(aws ecr describe-repositories --region "$REGION" \
+  --query "repositories[?starts_with(repositoryName, 'creditlens')].repositoryName" --output text 2>/dev/null || true)"
+if [ -n "$REPOS" ] && [ "$REPOS" != "None" ]; then
+  for repo in $REPOS; do
+    run "delete ECR repository $repo and every image in it" \
+      aws ecr delete-repository --region "$REGION" --repository-name "$repo" --force
+  done
 else
-  echo "  no repository named $ECR_REPO"
+  echo "  no repository whose name starts with creditlens"
 fi
 
 # ---------------------------------------------------------------------------

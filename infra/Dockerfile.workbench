@@ -1,0 +1,88 @@
+# The Good Bank Credit Workbench in one container, with the synthetic demo data built in.
+#
+# This is the image you push to Amazon ECR and run on a server (infra/aws/workbench_on_aws.md).
+# Build it from the repository root, because it needs src/, app/ and notebooks/src/:
+#
+#   docker build -f infra/Dockerfile.workbench -t creditlens-workbench .
+#   docker run --rm -p 8090:8090 creditlens-workbench
+#
+# Then open http://localhost:8090. The review assistant takes about three and a half minutes to start.
+#
+# What is inside: the project's code, the workbench, notebook 04b's source (the workbench runs its code at
+# start-up), and Good Bank's synthetic data, generated while the image is built. What is not: .env, keys,
+# your laptop's data folder. It runs offline: no API key is needed or used.
+
+# --- Stage 1: install the Python packages (the build tools stay in this stage) ---
+FROM python:3.11-slim AS builder
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /build
+COPY pyproject.toml README.md ./
+COPY src ./src
+# Only what the workbench uses: the web server, the agent graph and MCP, the gateway, the bank adapters, reading
+# the PDFs (OCR for the scanned ones), the risk model and its registry (scikit-learn, MLflow), and the two small
+# retrieval packages the story data needs (the company graph and keyword search). Left out, to keep the image small
+# enough to push and to fit a small server's disk: embedding models, xgboost (with its GPU libraries), Evidently
+# (the drift job works without it) and the test tools.
+ARG EXTRAS="api,agents,llm,integrations,extraction"
+RUN pip install --upgrade pip \
+    && pip install ".[${EXTRAS}]" "scikit-learn>=1.4" "mlflow>=2.12" "joblib>=1.3" "networkx>=3" "rank-bm25>=0.2" \
+    && pip uninstall -y opencv-python \
+    && pip install "opencv-python-headless>=4.5"
+# The OCR engine asks for opencv-python, the desktop build. The headless build is the same cv2 without the screen
+# libraries, which a server has no use for.
+
+# --- Stage 2: the image that runs ---
+FROM python:3.11-slim AS runtime
+
+# PYTHONPATH: import the code from /app/src, so the project's root (and its data folder) is /app.
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH=/app/src \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    WORKBENCH_HOST=0.0.0.0 \
+    WORKBENCH_PORT=8090 \
+    MLFLOW_DISABLE_AGENT_HINT=1
+
+# OpenCV (used by the OCR engine) needs this one system library on a slim Linux.
+RUN apt-get update && apt-get install -y --no-install-recommends libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Never run as root: a break-in through the web app gets an ordinary user, not the container.
+RUN useradd --create-home --uid 10001 creditlens
+COPY --from=builder /opt/venv /opt/venv
+
+WORKDIR /app
+COPY --chown=creditlens:creditlens pyproject.toml README.md ./
+COPY --chown=creditlens:creditlens src ./src
+COPY --chown=creditlens:creditlens app ./app
+COPY --chown=creditlens:creditlens notebooks/src ./notebooks/src
+COPY --chown=creditlens:creditlens ground_truth ./ground_truth
+COPY --chown=creditlens:creditlens evals ./evals
+COPY --chown=creditlens:creditlens monitoring ./monitoring
+COPY --chown=creditlens:creditlens infra/Dockerfile infra/Dockerfile.workbench ./infra/
+# The data folder, the SQLite database and the audit log are written under /app, so the app's user owns it.
+RUN mkdir -p /app/data && chown -R creditlens:creditlens /app
+USER creditlens
+
+# Good Bank's synthetic data, generated once, now: the running container needs nothing from outside.
+RUN python -m creditlens.generators \
+    && python -m creditlens.pipeline --load \
+    && python -m creditlens.scenarios \
+    && python -m creditlens.scenarios.story build
+
+EXPOSE 8090
+
+# Healthy once the web server answers. The review assistant may still be starting: the top bar says so.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8090/api/status', timeout=4).status == 200 else 1)"
+
+CMD ["python", "app/workbench/server.py"]

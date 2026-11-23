@@ -88,6 +88,14 @@ def test_health_is_open_and_reports_the_database(client):
     assert body["database_ok"] is True
 
 
+def test_the_docs_page_has_every_endpoint(client):
+    """/docs reads /openapi.json. On 23 November it failed with a 500 (the scoring request model sat inside a
+    function), so /docs showed no endpoints while /health said ok."""
+    response = client.get("/openapi.json")
+    assert response.status_code == 200, response.text
+    assert "/risk/score" in response.json()["paths"]
+
+
 def test_token_round_trip_identifies_the_user(client):
     response = client.get("/me", headers=bearer(client, HEAD_OF_CREDIT))
     assert response.status_code == 200

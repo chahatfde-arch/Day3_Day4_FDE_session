@@ -1,0 +1,3 @@
+# Shell scripts keep Unix line endings on every checkout, Windows included: bash cannot run a script with CRLF
+# (infra/aws/teardown.sh, run from Git Bash).
+*.sh text eol=lf
